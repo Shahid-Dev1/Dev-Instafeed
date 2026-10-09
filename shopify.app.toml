@@ -24,3 +24,9 @@ api_version = "2026-10"
 
 [build]
 automatically_update_urls_on_dev = true
+
+# Storefront data: /apps/instafeed/* on the shop domain is signed by Shopify and forwarded here.
+[app_proxy]
+url = "/proxy"
+subpath = "instafeed"
+prefix = "apps"

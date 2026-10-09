@@ -12,6 +12,7 @@ import { healthRoutes } from './modules/health/routes.js';
 import { connectionRoutes } from './modules/connections/routes.js';
 import { productRoutes } from './modules/products/routes.js';
 import { bunnyWebhookRoutes, videoRoutes } from './modules/videos/routes.js';
+import { storefrontRoutes } from './modules/storefront/routes.js';
 import { widgetRoutes } from './modules/widgets/routes.js';
 import { teamRoutes } from './modules/team/routes.js';
 import { webhookRoutes } from './modules/webhooks/routes.js';
@@ -74,6 +75,7 @@ export async function buildApp(deps: Deps): Promise<FastifyInstance> {
   await app.register(videoRoutes(deps));
   await app.register(connectionRoutes(deps));
   await app.register(widgetRoutes(deps));
+  await app.register(storefrontRoutes(deps));
   await app.register(bunnyWebhookRoutes(deps));
   await app.register(webhookRoutes(deps));
   return app;

@@ -31,3 +31,7 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm test
       - run: pnpm build
+      # The committed extension asset must match the source.
+      - run: git diff --exit-code extensions/instafeed-theme/assets
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm exec playwright test

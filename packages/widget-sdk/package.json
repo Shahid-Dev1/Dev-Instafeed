@@ -3,11 +3,20 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "exports": { ".": "./src/index.ts" },
+  "exports": {
+    ".": "./src/index.ts"
+  },
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "build": "node scripts/build.mjs"
   },
-  "dependencies": { "@instafeed/shared": "workspace:*" },
-  "devDependencies": { "happy-dom": "20.14.5" }
+  "dependencies": {
+    "@instafeed/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2",
+    "happy-dom": "20.14.5",
+    "hls.js": "1.6.19"
+  }
 }

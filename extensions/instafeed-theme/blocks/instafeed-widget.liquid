@@ -1,0 +1,30 @@
+{%- comment -%}
+  Shoppable video widget (app block). The widget's settings, videos and products come from the published
+  snapshot via the app proxy; no merchant data or credentials are embedded in the theme.
+{%- endcomment -%}
+<instafeed-widget
+  data-widget-id="{{ block.settings.widget_id | strip | escape }}"
+  data-page-type="{{ request.page_type | escape }}"
+  data-path="{{ request.path | escape }}"
+  {% if product %}data-product-id="{{ product.id }}"{% endif %}
+  {% if collection %}data-collection="{{ collection.handle | escape }}"{% endif %}
+  data-proxy="{{ routes.root_url | append: '/apps/instafeed' | replace: '//', '/' }}"
+  data-hls-src="{{ 'instafeed-hls.js' | asset_url }}"
+  style="display:block;min-height:{{ block.settings.min_height }}px"
+  {{ block.shopify_attributes }}
+></instafeed-widget>
+{%- if block.settings.widget_id == blank and request.design_mode -%}
+  <p style="padding:16px;border:1px dashed #999;text-align:center">Paste a widget ID from Instafeed → Widgets.</p>
+{%- endif -%}
+<script src="{{ 'instafeed.js' | asset_url }}" defer></script>
+
+{% schema %}
+{
+  "name": "Shoppable videos",
+  "target": "section",
+  "settings": [
+    { "type": "text", "id": "widget_id", "label": "Widget ID", "info": "Copy it from Instafeed → Widgets → your widget." },
+    { "type": "range", "id": "min_height", "label": "Reserved height", "min": 0, "max": 600, "step": 10, "unit": "px", "default": 0, "info": "Reserves space while videos load to avoid layout shift." }
+  ]
+}
+{% endschema %}

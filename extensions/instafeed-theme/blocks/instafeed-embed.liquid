@@ -1,0 +1,21 @@
+{%- comment -%}
+  App embed: loads floating (picture-in-picture) widgets whose targeting matches the current page.
+  The file name must stay "instafeed-embed" (onboarding detects the embed by this handle).
+{%- endcomment -%}
+<instafeed-embed
+  data-page-type="{{ request.page_type | escape }}"
+  data-path="{{ request.path | escape }}"
+  {% if product %}data-product-id="{{ product.id }}"{% endif %}
+  {% if collection %}data-collection="{{ collection.handle | escape }}"{% endif %}
+  data-proxy="{{ routes.root_url | append: '/apps/instafeed' | replace: '//', '/' }}"
+  data-hls-src="{{ 'instafeed-hls.js' | asset_url }}"
+></instafeed-embed>
+<script src="{{ 'instafeed.js' | asset_url }}" defer></script>
+
+{% schema %}
+{
+  "name": "Instafeed videos",
+  "target": "body",
+  "settings": []
+}
+{% endschema %}

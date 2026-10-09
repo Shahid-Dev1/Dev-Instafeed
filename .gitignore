@@ -10,3 +10,7 @@ apps/api/src/generated/
 next-env.d.ts
 playwright-report/
 test-results/
+
+# e2e artifacts
+/test-results/
+/playwright-report/

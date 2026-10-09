@@ -105,6 +105,13 @@ export function WidgetEditor({ id, backHref }: { id: string; backHref: string })
         <button onClick={() => void publish('publish')} disabled={busy || !configCheck.success || !targetingCheck.success}>{widget.status === 'PUBLISHED' ? 'Publish changes' : 'Publish'}</button>
         {widget.status === 'PUBLISHED' && <button onClick={() => void publish('unpublish')} disabled={busy}>Unpublish</button>}
       </header>
+      <p>
+        <small>
+          Widget ID for the theme block: <code>{widget.id}</code>{' '}
+          <button onClick={() => void navigator.clipboard?.writeText(widget.id).then(() => setMsg({ kind: 'ok', text: 'Widget ID copied. Paste it into the “Shoppable videos” app block in the theme editor.' }))}>Copy</button>
+          {widget.type === 'FLOATING' && ' · Floating widgets appear automatically via the Instafeed app embed.'}
+        </small>
+      </p>
       {msg && <p role={msg.kind === 'error' ? 'alert' : 'status'} style={{ color: msg.kind === 'error' ? '#b42318' : '#067647' }}>{msg.text}</p>}
       {!configCheck.success && <p role="alert">Fix: {configCheck.error.issues[0]?.path.join('.')}: {configCheck.error.issues[0]?.message}</p>}
       {!targetingCheck.success && <p role="alert">Targeting: {targetingCheck.error.issues[0]?.message}</p>}

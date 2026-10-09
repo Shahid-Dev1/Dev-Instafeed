@@ -31,7 +31,7 @@ apps/web            Next.js dashboard (App Router, Polaris web components, TanSt
 apps/api            Fastify server (src/server.ts) and BullMQ worker (src/worker.ts)
 packages/shared     Zod schemas and types shared by web, api and sdk (WidgetConfig, events, API DTOs)
 packages/widget-sdk Storefront renderer (plain TypeScript, Shadow DOM, no innerHTML from data). The dashboard preview uses the same renderer. Phase 6 bundles it with esbuild into extensions/.../assets
-extensions/instafeed-theme  Shopify Theme App Extension (app blocks and app embed)
+extensions/instafeed-theme  Theme App Extension: blocks/instafeed-widget.liquid (app block), blocks/instafeed-embed.liquid (app embed), assets/instafeed.js (built by `pnpm --filter @instafeed/widget-sdk build`, committed; CI checks it is current) and assets/instafeed-hls.js (lazy)
 shopify.app.toml    Shopify CLI app config (scopes, webhooks, app proxy)
 tests/e2e           Playwright
 docs/               This documentation

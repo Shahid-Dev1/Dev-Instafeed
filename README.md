@@ -2,7 +2,7 @@
 
 A multi-tenant SaaS that lets D2C brands put shoppable videos on their Shopify storefronts. Videos can be uploads (Bunny Stream), YouTube Shorts or TikTok videos, each with tagged products, Add to Cart and revenue attribution.
 
-**Status:** Phases 0 to 5 are code-complete with automated tests (169 passing). Live checks are waiting on credentials and a dev-store install. Phase 6 (storefront SDK and Theme App Extension) is next. See [docs/CHECKLIST.md](docs/CHECKLIST.md).
+**Status:** Phases 0 to 6 are code-complete with automated tests (188 unit/integration plus 14 e2e written). Live checks are waiting on credentials and a dev-store install (see [docs/STOREFRONT_TEST_PLAN.md](docs/STOREFRONT_TEST_PLAN.md)). Phase 7 (analytics and attribution) is next. See [docs/CHECKLIST.md](docs/CHECKLIST.md).
 
 ## Stack
 pnpm monorepo · Node 24 · TypeScript · Next.js 16 (`apps/web`) · Fastify 5 API and BullMQ worker (`apps/api`) · Prisma 7 / PostgreSQL 16 · Redis 7 · Zod schemas shared in `packages/shared`.
@@ -22,7 +22,9 @@ pnpm db:migrate && pnpm db:seed # the seed is idempotent
 | Command | What |
 |---|---|
 | `pnpm dev` | Dashboard on :3000, API on :4000 and the BullMQ worker (watch mode) |
-| `pnpm lint` · `pnpm typecheck` · `pnpm test` · `pnpm build` | Quality gates (CI runs all four) |
+| `pnpm lint` · `pnpm typecheck` · `pnpm test` · `pnpm build` | Quality gates (CI runs all four plus e2e) |
+| `pnpm test:e2e` | Builds the storefront bundle and runs Playwright |
+| `pnpm --filter @instafeed/widget-sdk build` | Rebuilds `extensions/instafeed-theme/assets/instafeed.js` (commit the result) |
 
 Health: `GET /health` (liveness) and `GET /health/ready` (DB and Redis; returns 503 if either is down).
 The tests use `TEST_DATABASE_URL` (`instafeed_test`) and apply migrations automatically.

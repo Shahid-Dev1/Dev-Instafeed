@@ -38,7 +38,7 @@ Merchant API calls use `Authorization: Bearer <Shopify session token | dashboard
 - `POST /api/v1/ai/widget-config` `{ widgetId, prompt }` returns `{ config, diff }`. It never saves.
 
 ## Storefront (App Proxy `/apps/instafeed`, HMAC-verified, no auth)
-- `GET /proxy/widgets?page=&productId=`: published widgets, videos and products for that page.
+- `GET /proxy/widgets?ids=&embed=1&page_type=&path=&product_id=&collection=` (+ Shopify's `shop`, `timestamp`, `signature`) returns `{ widgets: [{ placement: block|embed, payload }] }`. Blocks are returned by explicit id. The embed returns FLOATING widgets whose published targeting matches the page. Responses contain only published snapshots with READY videos, use `Cache-Control: public, max-age=60`, and are limited to 120 requests/min per IP.
 - `POST /proxy/events`: a batch of up to 50 versioned events (`v: 1`). Returns 202.
 
 ## Analytics

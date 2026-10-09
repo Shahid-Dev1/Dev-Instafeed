@@ -10,6 +10,8 @@ export interface MountOptions {
   device: 'desktop' | 'mobile';
   /** Preview mode positions floating widgets inside the container instead of the viewport. */
   preview?: boolean;
+  /** Use Bunny's lightweight animated preview image on cards (storefront, when autoplay is on and motion is allowed). */
+  animatedPreviews?: boolean;
   onEvent?: (e: WidgetEvent) => void;
 }
 
@@ -49,9 +51,19 @@ export function mountWidget(host: HTMLElement, payload: WidgetPayload, opts: Mou
     ), el('button', { class: 'if-btn', type: 'button', onclick: () => emit({ type: 'cta', videoId: v.id, productId: v.products[0]?.id ?? null }) }, [c.cta.label])]);
   };
 
+  const poster = (v: PayloadVideo) => {
+    const still = safeUrl(v.thumbnailUrl);
+    const animated = opts.animatedPreviews && c.playback.autoplay && v.playbackUrl ? safeUrl(v.playbackUrl.replace(/playlist\.m3u8$/, 'preview.webp')) : undefined;
+    const src = animated ?? still;
+    if (!src) return null;
+    const img = el('img', { src, alt: '', loading: 'lazy', decoding: 'async' });
+    if (animated && still) img.addEventListener('error', () => { if (img.src !== still) img.src = still; }, { once: true });
+    return img;
+  };
+
   const media = (v: PayloadVideo, withTitle = false) =>
     el('button', { class: 'if-media', type: 'button', 'aria-label': `Play video: ${v.title}`, onclick: () => emit({ type: 'open', videoId: v.id }) }, [
-      safeUrl(v.thumbnailUrl) ? el('img', { src: safeUrl(v.thumbnailUrl), alt: '', loading: 'lazy', decoding: 'async' }) : null,
+      poster(v),
       withTitle ? el('span', { class: 'if-video-title' }, [v.title]) : null,
     ]);
 
