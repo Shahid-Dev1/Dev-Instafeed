@@ -1,3 +1,4 @@
+import type { Queue } from 'bullmq';
 import type { Redis } from 'ioredis';
 import type { Env } from './config/env.js';
 import type { Db } from './lib/db.js';
@@ -15,4 +16,7 @@ export interface Deps {
   redis: Redis;
   fetch: FetchFn;
   checks: HealthChecks;
+  queues: { products: Queue };
+  /** Injected so retry/backoff paths run instantly in tests. */
+  sleep: (ms: number) => Promise<void>;
 }

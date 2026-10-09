@@ -2,7 +2,7 @@
 
 A multi-tenant SaaS that lets D2C brands put shoppable videos on their Shopify storefronts. Videos can be uploads (Bunny Stream), YouTube Shorts or TikTok videos, each with tagged products, Add to Cart and revenue attribution.
 
-**Status:** Phases 0, 1 and 2 are complete. Phase 2's live install on the dev store is waiting on an HTTPS tunnel. Phase 3 (product catalog) is next. See [docs/CHECKLIST.md](docs/CHECKLIST.md).
+**Status:** Phases 0 to 3 are code-complete. The live install and sync on the dev store have not been confirmed yet. Phase 4 (video library) is next. See [docs/CHECKLIST.md](docs/CHECKLIST.md).
 
 ## Stack
 pnpm monorepo · Node 24 · TypeScript · Next.js 16 (`apps/web`) · Fastify 5 API and BullMQ worker (`apps/api`) · Prisma 7 / PostgreSQL 16 · Redis 7 · Zod schemas shared in `packages/shared`.
@@ -21,8 +21,7 @@ pnpm db:migrate && pnpm db:seed # the seed is idempotent
 ## Run
 | Command | What |
 |---|---|
-| `pnpm dev` | Dashboard on :3000 and API on :4000 (watch mode) |
-| `pnpm --filter @instafeed/api dev:worker` | Background job worker |
+| `pnpm dev` | Dashboard on :3000, API on :4000 and the BullMQ worker (watch mode) |
 | `pnpm lint` · `pnpm typecheck` · `pnpm test` · `pnpm build` | Quality gates (CI runs all four) |
 
 Health: `GET /health` (liveness) and `GET /health/ready` (DB and Redis; returns 503 if either is down).

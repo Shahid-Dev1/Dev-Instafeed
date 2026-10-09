@@ -42,5 +42,5 @@ docs/               This documentation
 - **Provider adapters:** `VideoSourceProvider` (youtube, tiktok_url, tiktok_account, upload) and `VideoStorageProvider` (bunny). Tests use fake adapters only.
 - **Feature flags:** `FeatureFlag` table (global plus per-store override), seeded from env defaults. Flags are `tiktok_display_api`, `ai_assistant` and `integration_<name>`.
 - **Secrets:** OAuth tokens are encrypted with AES-256-GCM (`ENCRYPTION_KEY`), and env is validated with Zod at boot.
-- **Jobs:** These are idempotent, keyed by a natural `jobId` (for example `sync:{storeId}`). They retry with exponential backoff, and Shopify throttle cost is honoured.
+- **Jobs:** These are idempotent, keyed by a natural `jobId` (for example `full-sync-{storeId}-{runId}`; BullMQ ids avoid `:`). They retry with exponential backoff, and Shopify throttle cost is honoured.
 - **Errors:** The uniform envelope is `{ error: { code, message, details? } }` with typed codes.

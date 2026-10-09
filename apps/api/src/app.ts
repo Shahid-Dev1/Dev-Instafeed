@@ -9,6 +9,7 @@ import { AppError } from './lib/errors.js';
 import { TenantScopeError } from './lib/tenant-guard.js';
 import { authRoutes } from './modules/auth/routes.js';
 import { healthRoutes } from './modules/health/routes.js';
+import { productRoutes } from './modules/products/routes.js';
 import { teamRoutes } from './modules/team/routes.js';
 import { webhookRoutes } from './modules/webhooks/routes.js';
 
@@ -66,6 +67,7 @@ export async function buildApp(deps: Deps): Promise<FastifyInstance> {
   await app.register(healthRoutes(deps.checks));
   await app.register(authRoutes(deps));
   await app.register(teamRoutes(deps));
+  await app.register(productRoutes(deps));
   await app.register(webhookRoutes(deps));
   return app;
 }

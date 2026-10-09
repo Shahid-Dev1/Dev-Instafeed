@@ -8,11 +8,96 @@ import { TEST_SHOPIFY, testEnv } from './env.js';
 export const ORIGIN = 'http://localhost:3000';
 
 /** In-memory stand-in for Shopify's HTTP API, used only in tests at the fetch boundary. */
+export interface FakeVariant {
+  id: string;
+  title: string;
+  sku: string | null;
+  price: string;
+  availableForSale: boolean;
+  position: number;
+  selectedOptions: { name: string; value: string }[];
+  image: null;
+}
+
+export interface FakeProduct {
+  id: string;
+  handle: string;
+  title: string;
+  status: string;
+  updatedAt: string;
+  imageUrl: string | null;
+  variants: FakeVariant[];
+}
+
+export function fakeProduct(n: number, variantCount = 2, overrides: Partial<FakeProduct> = {}): FakeProduct {
+  return {
+    id: `gid://shopify/Product/${n}`,
+    handle: `product-${n}`,
+    title: `Product ${String(n).padStart(3, '0')}`,
+    status: 'ACTIVE',
+    updatedAt: '2026-10-01T00:00:00Z',
+    imageUrl: `https://cdn.shopify.com/p${n}.jpg`,
+    variants: Array.from({ length: variantCount }, (_, i) => ({
+      id: `gid://shopify/ProductVariant/${n * 1000 + i}`,
+      title: `Size ${i}`,
+      sku: `SKU-${n}-${i}`,
+      price: (10 + i).toFixed(2),
+      availableForSale: i % 2 === 0,
+      position: i + 1,
+      selectedOptions: [{ name: 'Size', value: String(i) }],
+      image: null,
+    })),
+    ...overrides,
+  };
+}
+
+/** Pages a list the way Shopify connections do, using the item index as an opaque cursor. */
+function connection<T>(items: T[], first: number, after: string | null | undefined) {
+  const start = after ? Number(after) + 1 : 0;
+  const nodes = items.slice(start, start + first);
+  const end = start + nodes.length - 1;
+  return { nodes, pageInfo: { hasNextPage: end < items.length - 1, endCursor: nodes.length ? String(end) : null } };
+}
+
 export class FakeShopify {
   calls: { url: string; body: Record<string, unknown> }[] = [];
   tokenCounter = 0;
   failTokenExchange = false;
   shopNames: Record<string, string> = {};
+  /** Catalog per shop domain. */
+  catalogs: Record<string, FakeProduct[]> = {};
+  /** Number of upcoming GraphQL calls to answer with a THROTTLED error. */
+  throttleNext = 0;
+
+  private productNode(p: FakeProduct) {
+    return {
+      id: p.id,
+      handle: p.handle,
+      title: p.title,
+      status: p.status,
+      updatedAt: p.updatedAt,
+      featuredMedia: p.imageUrl ? { preview: { image: { url: p.imageUrl } } } : null,
+      variants: connection(p.variants, 50, null),
+    };
+  }
+
+  private graphql(shop: string, query: string, vars: Record<string, unknown>) {
+    const catalog = this.catalogs[shop] ?? [];
+    const find = () => catalog.find((p) => p.id === vars.id);
+    if (query.includes('query Products(')) {
+      const page = connection(catalog, Number(vars.first), vars.after as string | null);
+      return { products: { pageInfo: page.pageInfo, nodes: page.nodes.map((p) => this.productNode(p)) } };
+    }
+    if (query.includes('query ProductVariants(')) {
+      const p = find();
+      return { product: p ? { variants: connection(p.variants, 100, vars.after as string) } : null };
+    }
+    if (query.includes('query Product(')) {
+      const p = find();
+      return { product: p ? this.productNode(p) : null };
+    }
+    return { shop: { name: this.shopNames[shop] ?? shop, currencyCode: 'INR', ianaTimezone: 'Asia/Kolkata' } };
+  }
 
   fetch: typeof fetch = async (input, init) => {
     const url = String(input);
@@ -31,7 +116,14 @@ export class FakeShopify {
       });
     }
     if (url.includes('/graphql.json')) {
-      return Response.json({ data: { shop: { name: this.shopNames[shop] ?? shop, currencyCode: 'INR', ianaTimezone: 'Asia/Kolkata' } } });
+      if (this.throttleNext > 0) {
+        this.throttleNext--;
+        return Response.json({
+          errors: [{ message: 'Throttled', extensions: { code: 'THROTTLED' } }],
+          extensions: { cost: { requestedQueryCost: 520, throttleStatus: { currentlyAvailable: 20, restoreRate: 100 } } },
+        });
+      }
+      return Response.json({ data: this.graphql(shop, String(body.query), (body.variables ?? {}) as Record<string, unknown>) });
     }
     return new Response('not found', { status: 404 });
   };
@@ -47,11 +139,12 @@ export interface TestContext {
   shopify: FakeShopify;
 }
 
-export async function createTestContext(): Promise<TestContext> {
+export async function createTestContext(): Promise<TestContext & { sleeps: number[] }> {
   const shopify = new FakeShopify();
-  const deps = createDeps(testEnv(), shopify.fetch);
+  const sleeps: number[] = [];
+  const deps = { ...createDeps(testEnv(), shopify.fetch), sleep: async (ms: number) => void sleeps.push(ms) };
   const app = await buildApp(deps);
-  return { deps, app, shopify };
+  return { deps, app, shopify, sleeps };
 }
 
 /** Clears all tenant and auth data (keeps seeded plans/flags) and rate-limit counters. */
@@ -59,6 +152,7 @@ export async function resetData(deps: Deps): Promise<void> {
   await deps.rawDb.$executeRawUnsafe(
     'TRUNCATE "AuditLog", "WebhookReceipt", "Session", "Membership", "User", "Store" RESTART IDENTITY CASCADE',
   );
+  await deps.queues.products.obliterate({ force: true });
   const keys = await deps.redis.keys('rl:*');
   if (keys.length) await deps.redis.del(...keys);
 }

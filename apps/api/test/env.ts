@@ -19,5 +19,6 @@ export function testEnv(): Env {
     SHOPIFY_APP_URL: 'https://app.test',
     WEB_URL: 'http://localhost:3000',
     ENCRYPTION_KEY: Buffer.alloc(32, 7).toString('base64'),
+    QUEUE_PREFIX: 'ifq-test',
   });
 }

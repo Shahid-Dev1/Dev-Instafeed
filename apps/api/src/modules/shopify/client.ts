@@ -73,6 +73,25 @@ export function refreshOfflineToken(fetchFn: FetchFn, creds: ShopifyAppCredentia
   });
 }
 
+interface QueryCost {
+  requestedQueryCost?: number;
+  throttleStatus?: { currentlyAvailable: number; restoreRate: number };
+}
+
+interface GraphqlResponse<T> {
+  data?: T;
+  errors?: { message?: string; extensions?: { code?: string } }[];
+  extensions?: { cost?: QueryCost };
+}
+
+/** Time until the leaky bucket holds enough points for the request (Shopify calculated query cost). */
+export function throttleWaitMs(cost: QueryCost | undefined): number {
+  const t = cost?.throttleStatus;
+  if (!t || !t.restoreRate) return 1000;
+  const deficit = (cost?.requestedQueryCost ?? 0) - t.currentlyAvailable;
+  return Math.min(Math.max(Math.ceil((deficit / t.restoreRate) * 1000), 250), 30_000);
+}
+
 export async function adminGraphql<T>(
   fetchFn: FetchFn,
   creds: ShopifyAppCredentials,
@@ -94,7 +113,10 @@ export async function adminGraphql<T>(
   if (res.status === 401 || res.status === 403) throw new AppError('UNAUTHENTICATED', 'Shopify access token rejected');
   if (res.status === 429) throw new AppError('RATE_LIMITED', 'Shopify rate limit reached');
   if (!res.ok) throw new AppError('PROVIDER_ERROR', `Shopify GraphQL returned ${res.status}`);
-  const json = (await res.json()) as { data?: T; errors?: unknown };
-  if (json.errors || !json.data) throw new AppError('PROVIDER_ERROR', 'Shopify GraphQL error', json.errors);
+  const json = (await res.json()) as GraphqlResponse<T>;
+  if (json.errors?.some((e) => e.extensions?.code === 'THROTTLED')) {
+    throw new AppError('RATE_LIMITED', 'Shopify GraphQL cost limit reached', { retryAfterMs: throttleWaitMs(json.extensions?.cost) });
+  }
+  if (json.errors?.length || !json.data) throw new AppError('PROVIDER_ERROR', 'Shopify GraphQL error', json.errors);
   return json.data;
 }

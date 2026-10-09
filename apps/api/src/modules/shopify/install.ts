@@ -3,6 +3,7 @@ import type { Store } from '../../generated/prisma/client.js';
 import { decrypt, encrypt } from '../../lib/crypto.js';
 import { AppError } from '../../lib/errors.js';
 import { audit } from '../audit/audit.js';
+import { enqueueFullSync } from '../products/jobs.js';
 import { adminGraphql, exchangeSessionToken, refreshOfflineToken, type OfflineToken, type ShopifyAppCredentials } from './client.js';
 
 const REFRESH_MARGIN_MS = 5 * 60 * 1000;
@@ -66,6 +67,7 @@ export async function installFromSessionToken(deps: Deps, shop: string, sessionT
       action: existing ? 'store.reinstalled' : 'store.installed',
       meta: { scopes: token.scopes },
     });
+    await enqueueFullSync(deps, store.id, 'INSTALL');
   }
   return store;
 }

@@ -5,7 +5,7 @@
   "packageManager": "pnpm@11.9.0",
   "engines": { "node": ">=24" },
   "scripts": {
-    "dev": "pnpm -r --parallel --filter ./apps/* dev",
+    "dev": "pnpm -r --parallel --filter './apps/*' run '/^dev(:worker)?$/'",
     "build": "pnpm -r build",
     "lint": "eslint .",
     "typecheck": "pnpm -r typecheck",

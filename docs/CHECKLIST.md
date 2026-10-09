@@ -20,11 +20,11 @@ Status key: `[x]` done (tests ran) · `[~]` code done, live test blocked · `[ ]
 - [x] Store, user and role model. AC: RBAC matrix tests for every role.
 - [x] Isolation, sessions, uninstall. AC: Store A cannot read or modify Store B (tests); uninstall, reinstall, duplicate-webhook and GDPR webhook tests pass.
 
-## Phase 3: Product catalog
-- [ ] GraphQL product and variant sync. AC: paginated sync test (more than 1 page) stores gids.
-- [ ] Background jobs, pagination, throttling. AC: retry and throttle tests; one sync per store at a time.
-- [ ] Search and tagging UI. AC: search by title or SKU; isolation test.
-- [ ] Webhook updates and reconciliation. AC: create/update/delete webhook tests; nightly reconcile.
+## Phase 3: Product catalog (code ✅, live sync blocked on dev-store install)
+- [x] GraphQL product and variant sync. AC: paginated sync test (3 pages) stores gids; products with 180 variants fetch extra variant pages.
+- [x] Background jobs, pagination, throttling. AC: THROTTLED responses wait (based on the reported query cost) and retry; repeated throttling marks the run FAILED; one active sync per store, and stuck runs expire after 2h.
+- [x] Search UI. AC: search by title, handle or SKU, status filter, cursor pagination; isolation test. *Tagging products onto videos ships with videos in Phase 4.*
+- [x] Webhook updates and reconciliation. AC: create/update re-fetch from GraphQL (out-of-order safe); delete marks deleted; a full sync soft-deletes products Shopify no longer returns; nightly `reconcile-all` scheduler at 03:00 UTC.
 
 ## Phase 4: Video library
 - [ ] Upload to Bunny with processing states. AC: TUS upload; a signed status webhook moves the video PENDING→READY or FAILED.

@@ -16,6 +16,7 @@ const envSchema = z.object({
   ENCRYPTION_KEY: z
     .string()
     .refine((k) => Buffer.from(k, 'base64').length === 32, 'must be 32 bytes, base64-encoded'),
+  QUEUE_PREFIX: z.string().regex(/^[a-z0-9-]+$/).default('ifq'),
   SESSION_TTL_DAYS: z.coerce.number().int().min(1).max(90).default(14),
 });
 

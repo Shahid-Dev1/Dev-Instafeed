@@ -12,8 +12,10 @@ Merchant API calls use `Authorization: Bearer <Shopify session token | dashboard
 - `GET /api/v1/team` · `PATCH /api/v1/team/:userId` `{ role: ADMIN|EDITOR|ANALYST }` · `DELETE /api/v1/team/:userId`. All require Admin or above. The owner and the caller themselves cannot be changed. Invites arrive in Phase 9.
 
 ## Products (Editor+ for writes)
-- `GET /api/v1/products?q=&status=&cursor=` · `GET /api/v1/products/:id`
-- `POST /api/v1/products/sync` (enqueue) · `GET /api/v1/products/sync/status`
+- `GET /api/v1/products?q=&status=&cursor=&limit=` (Analyst+) returns `{ items, nextCursor }`. `q` matches title, handle or variant SKU (case-insensitive). Deleted products are excluded.
+- `GET /api/v1/products/:id` (Analyst+) returns a summary plus `variants[]` (price as a decimal string in the store currency).
+- `POST /api/v1/products/sync` (Editor+) returns 202 `{ syncRun }`. It reuses the active run if one is queued or running.
+- `GET /api/v1/products/sync/status` returns `{ syncRun | null }` (latest run).
 
 ## Videos
 - `GET /api/v1/videos?q=&source=&status=&tag=&archived=&sort=&cursor=`

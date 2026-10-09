@@ -15,7 +15,7 @@ redirect_urls = ["http://localhost:3000/auth/shopify/callback"]
 api_version = "2026-10"
 
   [[webhooks.subscriptions]]
-  topics = ["app/uninstalled", "app/scopes_update"]
+  topics = ["app/uninstalled", "app/scopes_update", "products/create", "products/update", "products/delete"]
   uri = "/webhooks/shopify"
 
   [[webhooks.subscriptions]]

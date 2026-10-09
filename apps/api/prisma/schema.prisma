@@ -65,6 +65,9 @@ model Store {
   memberships Membership[]
   sessions    Session[]
   auditLogs   AuditLog[]
+  products    Product[]
+  variants    Variant[]
+  syncRuns    SyncRun[]
 }
 
 model User {
@@ -132,6 +135,79 @@ model AuditLog {
   createdAt DateTime @default(now())
 
   store Store? @relation(fields: [storeId], references: [id], onDelete: SetNull)
+
+  @@index([storeId, createdAt])
+}
+
+/// Mirror of Shopify products. shopifyId is the GraphQL gid; deletedAt marks products removed in Shopify.
+model Product {
+  id               String    @id @default(cuid())
+  storeId          String
+  shopifyId        String
+  handle           String
+  title            String
+  status           String    // ACTIVE | DRAFT | ARCHIVED | UNLISTED (Shopify ProductStatus)
+  imageUrl         String?
+  priceMin         Decimal?  @db.Decimal(14, 2)
+  priceMax         Decimal?  @db.Decimal(14, 2)
+  totalVariants    Int       @default(0)
+  shopifyUpdatedAt DateTime
+  syncedAt         DateTime
+  deletedAt        DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  store    Store     @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  variants Variant[]
+
+  @@unique([storeId, shopifyId])
+  @@index([storeId, deletedAt, title])
+}
+
+model Variant {
+  id               String   @id @default(cuid())
+  storeId          String
+  productId        String
+  shopifyId        String
+  title            String
+  sku              String?
+  price            Decimal  @db.Decimal(14, 2)
+  availableForSale Boolean
+  options          Json     // [{ name, value }]
+  imageUrl         String?
+  position         Int
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  store   Store   @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([storeId, shopifyId])
+  @@index([storeId, productId])
+  @@index([storeId, sku])
+}
+
+enum SyncStatus {
+  QUEUED
+  RUNNING
+  SUCCEEDED
+  FAILED
+}
+
+model SyncRun {
+  id         String     @id @default(cuid())
+  storeId    String
+  kind       String     // PRODUCTS_FULL
+  status     SyncStatus @default(QUEUED)
+  trigger    String     // MANUAL | INSTALL | SCHEDULED
+  upserted   Int        @default(0)
+  deleted    Int        @default(0)
+  error      String?
+  startedAt  DateTime?
+  finishedAt DateTime?
+  createdAt  DateTime   @default(now())
+
+  store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
 
   @@index([storeId, createdAt])
 }

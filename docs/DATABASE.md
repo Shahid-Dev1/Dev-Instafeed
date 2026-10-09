@@ -10,9 +10,9 @@ All tenant tables carry a `storeId` foreign key, with an index starting with `st
 | Session | id, tokenHash (sha256, unique), userId, storeId?, expiresAt | Dashboard session for email login |
 | Invite | storeId, email, role, tokenHash, expiresAt | |
 | OAuthState | state, provider, storeId, expiresAt | Single use (Phase 4, TikTok) |
-| Product | storeId, shopifyId (gid), handle, title, status, imageUrl, priceMin/Max, updatedAtShopify, deletedAt | unique(storeId, shopifyId) |
-| Variant | storeId, productId, shopifyId, title, sku, price, available, options JSON | unique(storeId, shopifyId) |
-| SyncRun | storeId, kind, status, cursor, counts, error | |
+| Product | storeId, shopifyId (gid), handle, title, status, imageUrl, priceMin/Max (decimal), totalVariants, shopifyUpdatedAt, syncedAt, deletedAt | unique(storeId, shopifyId). Soft-deleted (deletedAt) so video tags survive and restored products reappear. |
+| Variant | storeId, productId, shopifyId, title, sku, price (decimal), availableForSale, options JSON, imageUrl, position | unique(storeId, shopifyId). Variants removed in Shopify are hard-deleted. |
+| SyncRun | storeId, kind (PRODUCTS_FULL), status (QUEUED/RUNNING/SUCCEEDED/FAILED), trigger (MANUAL/INSTALL/SCHEDULED), upserted, deleted, error, startedAt, finishedAt | |
 | Video | storeId, source (UPLOAD/YOUTUBE/TIKTOK_URL/TIKTOK_ACCOUNT), externalId, status (PENDING/PROCESSING/READY/FAILED/UNAVAILABLE), title, durationSec, thumbnailUrl, playbackUrl, embedHtml, aspectRatio, authorName, tags[], archivedAt, bytes | unique(storeId, source, externalId) for duplicate detection |
 | VideoProduct | storeId, videoId, productId, variantId?, position, startSec? | |
 | ProviderAccount | storeId, provider (TIKTOK), externalUserId, accessTokenEnc, refreshTokenEnc, expiresAt, scopes, status | |
