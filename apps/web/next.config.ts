@@ -7,7 +7,7 @@ if (existsSync(rootEnv)) process.loadEnvFile(rootEnv);
 const apiUrl = process.env.API_URL ?? 'http://localhost:4000';
 
 const config: NextConfig = {
-  transpilePackages: ['@instafeed/shared'],
+  transpilePackages: ['@instafeed/shared', '@instafeed/widget-sdk'],
   poweredByHeader: false,
   // One public origin: the API is reached through the dashboard so Shopify, cookies and App Bridge see a single host.
   async rewrites() {

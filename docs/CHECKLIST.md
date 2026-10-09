@@ -38,11 +38,11 @@ Status key: `[x]` done (tests ran) · `[~]` code done, live test blocked · `[ ]
 - [~] List Reels (VIDEO posts), flag non-importable ones (no `media_url`), require ownership confirmation, copy to Bunny, mark UNAVAILABLE if removed.
 - [~] Reel URL embed via Meta oEmbed (flag `instagram_oembed`). **Live: blocked, needs oEmbed Read approval.**
 
-## Phase 5: Widget builder
-- [ ] Stories, Carousel, Floating/PIP (plus Banner, Grid, Gallery). AC: create, configure and preview each type.
-- [ ] Config and style settings. AC: WidgetConfig schema validated on client and server.
-- [ ] Desktop and mobile preview, page targeting. AC: preview toggle; targeting rules tested.
-- [ ] Publish, unpublish, theme editor onboarding. AC: only published config is served through the proxy.
+## Phase 5: Widget builder (code ✅, theme-editor check pending a dev-store install)
+- [x] Stories, Carousel, Floating/PIP, Banner, Grid, Product gallery. AC: create, configure and preview each type (renderer DOM tests for all six).
+- [x] Config and style settings. AC: strict `widgetConfigSchema` (unknown keys, non-hex colours and out-of-range values rejected) validated on client and server and re-validated on read.
+- [x] Desktop and mobile preview, page targeting. AC: preview uses the storefront renderer with unsaved config; `matchesTargeting` tests cover home, products, tagged products, collections and page paths.
+- [~] Publish, unpublish, theme editor onboarding. AC: publish snapshots config, targeting and videos (draft edits don't leak; tested); optimistic concurrency (409); onboarding checklist detects the app embed from `settings_data.json` and deep-links the theme editor. *The proxy that serves published data ships in Phase 6. **Live theme-editor check: blocked, needs a dev-store install and the Phase 6 extension.***
 
 ## Phase 6: Storefront SDK
 - [ ] App blocks and app embed. AC: `shopify app dev` renders on the dev store (live).

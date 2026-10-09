@@ -72,6 +72,8 @@ model Store {
   videoProducts    VideoProduct[]
   providerAccounts ProviderAccount[]
   oauthStates      OAuthState[]
+  widgets          Widget[]
+  widgetVideos     WidgetVideo[]
 }
 
 model User {
@@ -262,8 +264,9 @@ model Video {
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
 
-  store    Store          @relation(fields: [storeId], references: [id], onDelete: Cascade)
-  products VideoProduct[]
+  store        Store          @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  products     VideoProduct[]
+  widgetVideos WidgetVideo[]
 
   @@unique([storeId, source, externalId])
   @@index([storeId, archivedAt, createdAt])
@@ -327,4 +330,59 @@ model OAuthState {
   createdAt DateTime @default(now())
 
   store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+}
+
+enum WidgetType {
+  STORIES
+  CAROUSEL
+  FLOATING
+  BANNER
+  GRID
+  PRODUCT_GALLERY
+}
+
+enum WidgetStatus {
+  DRAFT
+  PUBLISHED
+}
+
+/// Draft config/targeting/videos are edited freely; publishing snapshots them into published* fields,
+/// which are the only values the storefront ever reads. version supports optimistic concurrency.
+model Widget {
+  id                 String       @id @default(cuid())
+  storeId            String
+  name               String
+  type               WidgetType
+  status             WidgetStatus @default(DRAFT)
+  config             Json
+  targeting          Json
+  version            Int          @default(1)
+  publishedVersion   Int?
+  publishedConfig    Json?
+  publishedTargeting Json?
+  publishedVideoIds  String[]
+  publishedAt        DateTime?
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+
+  store  Store         @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  videos WidgetVideo[]
+
+  @@index([storeId, status])
+}
+
+/// Draft video list for a widget, in display order.
+model WidgetVideo {
+  id       String @id @default(cuid())
+  storeId  String
+  widgetId String
+  videoId  String
+  position Int
+
+  store  Store  @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  widget Widget @relation(fields: [widgetId], references: [id], onDelete: Cascade)
+  video  Video  @relation(fields: [videoId], references: [id], onDelete: Cascade)
+
+  @@unique([storeId, widgetId, videoId])
+  @@index([storeId, videoId])
 }

@@ -2,14 +2,18 @@ import Link from 'next/link';
 import { MeSummary } from '../../components/MeSummary';
 import { ProductsBrowser } from '../../components/ProductsBrowser';
 import { VideoLibrary } from '../../components/videos/VideoLibrary';
+import { WidgetEditor } from '../../components/widgets/WidgetEditor';
+import { WidgetListClient } from '../../components/widgets/WidgetListClient';
 import { TeamManager } from '../../components/TeamManager';
 
-export default async function DashboardPage({ searchParams }: { searchParams: Promise<{ view?: string }> }) {
-  const { view } = await searchParams;
+export default async function DashboardPage({ searchParams }: { searchParams: Promise<{ view?: string; id?: string }> }) {
+  const { view, id } = await searchParams;
   return (
     <main>
       <h1>Instafeed dashboard</h1>
-      <MeSummary teamHref="/dashboard?view=team" productsHref="/dashboard?view=products" videosHref="/dashboard?view=videos" />
+      <MeSummary teamHref="/dashboard?view=team" productsHref="/dashboard?view=products" videosHref="/dashboard?view=videos" widgetsHref="/dashboard?view=widgets" />
+      {view === 'widgets' && <WidgetListLinks />}
+      {view === 'widget' && id && <WidgetEditor id={id} backHref="/dashboard?view=widgets" />}
       {view === 'videos' && (
         <>
           <h2>Videos</h2>
@@ -32,5 +36,14 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         </>
       )}
     </main>
+  );
+}
+
+function WidgetListLinks() {
+  return (
+    <>
+      <h2>Widgets</h2>
+      <WidgetListClient />
+    </>
   );
 }

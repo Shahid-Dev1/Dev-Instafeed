@@ -1,0 +1,13 @@
+{
+  "name": "@instafeed/widget-sdk",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": { ".": "./src/index.ts" },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": { "@instafeed/shared": "workspace:*" },
+  "devDependencies": { "happy-dom": "20.14.5" }
+}

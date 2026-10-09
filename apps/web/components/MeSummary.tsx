@@ -4,9 +4,10 @@ import { hasRole, meSchema, type Me } from '@instafeed/shared';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { ApiRequestError } from '../lib/api';
+import { OnboardingChecklist } from './OnboardingChecklist';
 import { clientApi, selectStore } from '../lib/client';
 
-export function MeSummary({ teamHref, productsHref, videosHref }: { teamHref: string; productsHref: string; videosHref: string }) {
+export function MeSummary({ teamHref, productsHref, videosHref, widgetsHref }: { teamHref: string; productsHref: string; videosHref: string; widgetsHref: string }) {
   const [me, setMe] = useState<Me | null>(null);
   const [error, setError] = useState<ApiRequestError | null>(null);
 
@@ -36,10 +37,12 @@ export function MeSummary({ teamHref, productsHref, videosHref }: { teamHref: st
         <strong>{me.current.storeName ?? me.current.shopDomain}</strong> · your role: {me.current.role}
       </p>
       <nav style={{ display: 'flex', gap: 16 }}>
+        <Link href={widgetsHref}>Widgets</Link>
         <Link href={videosHref}>Videos</Link>
         <Link href={productsHref}>Products</Link>
         {hasRole(me.current.role, 'ADMIN') && <Link href={teamHref}>Manage team</Link>}
       </nav>
+      <OnboardingChecklist links={{ products: productsHref, videos: videosHref, widgets: widgetsHref }} />
     </section>
   );
 }

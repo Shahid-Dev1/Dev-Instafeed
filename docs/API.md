@@ -29,7 +29,12 @@ Merchant API calls use `Authorization: Bearer <Shopify session token | dashboard
 - `PATCH /api/v1/videos/:id` · `DELETE /api/v1/videos/:id` · `POST /api/v1/videos/bulk` `{ ids, action: archive|unarchive|delete|tag }`
 
 ## Widgets
-- `GET|POST /api/v1/widgets` · `GET|PATCH|DELETE /api/v1/widgets/:id` · `POST /api/v1/widgets/:id/publish|unpublish`
+- `GET /api/v1/widgets` · `POST /api/v1/widgets` `{ name, type }` returns 201 with default config and targeting for the type.
+- `GET /api/v1/widgets/:id` · `PATCH /api/v1/widgets/:id` `{ version, name?, config?, targeting?, videoIds? }` returns 409 if `version` is stale · `DELETE /api/v1/widgets/:id`
+- `POST /api/v1/widgets/:id/publish` snapshots the draft; a manual widget needs ≥1 READY video. `POST /api/v1/widgets/:id/unpublish`
+- `GET /api/v1/widgets/:id/preview?productId=` returns `{ payload }`: the same payload shape the storefront receives, built from the draft.
+- `GET /api/v1/onboarding` returns `{ productsSynced, videoCount, publishedWidgets, appEmbed: enabled|disabled|unknown, themeEditorUrl }`.
+- Schemas: `widgetConfigSchema`, `targetingSchema`, `widgetPayloadSchema` in `packages/shared/src/widgets.ts`.
 - `POST /api/v1/ai/widget-config` `{ widgetId, prompt }` returns `{ config, diff }`. It never saves.
 
 ## Storefront (App Proxy `/apps/instafeed`, HMAC-verified, no auth)

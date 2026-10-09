@@ -69,6 +69,8 @@ export class FakeShopify {
   catalogs: Record<string, FakeProduct[]> = {};
   /** Number of upcoming GraphQL calls to answer with a THROTTLED error. */
   throttleNext = 0;
+  /** Main theme config/settings_data.json content per shop. */
+  themeSettings: Record<string, string> = {};
 
   private productNode(p: FakeProduct) {
     return {
@@ -85,6 +87,10 @@ export class FakeShopify {
   private graphql(shop: string, query: string, vars: Record<string, unknown>) {
     const catalog = this.catalogs[shop] ?? [];
     const find = () => catalog.find((p) => p.id === vars.id);
+    if (query.includes('MainThemeSettings')) {
+      const content = this.themeSettings[shop];
+      return { themes: { nodes: [{ files: { nodes: content ? [{ body: { content } }] : [] } }] } };
+    }
     if (query.includes('query Products(')) {
       const page = connection(catalog, Number(vars.first), vars.after as string | null);
       return { products: { pageInfo: page.pageInfo, nodes: page.nodes.map((p) => this.productNode(p)) } };
