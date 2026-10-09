@@ -1,0 +1,39 @@
+generator client {
+  provider               = "prisma-client"
+  output                 = "../src/generated/prisma"
+  moduleFormat           = "esm"
+  importFileExtension    = "js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum PlanId {
+  FREE
+  STARTER
+  GROWTH
+  PRO
+}
+
+/// Subscription plans and their entitlements. Seeded; billing wiring arrives in Phase 9.
+model Plan {
+  id               PlanId   @id
+  name             String
+  priceMonthlyUsd  Int      // whole cents
+  limits           Json     // { videos, widgets, monthlyViews, storageGb }
+  features         String[]
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+/// Global default (storeId null) with optional per-store override (added in Phase 2).
+model FeatureFlag {
+  id        String   @id @default(cuid())
+  key       String
+  storeId   String?
+  enabled   Boolean  @default(false)
+  updatedAt DateTime @updatedAt
+
+  @@unique([key, storeId])
+}
