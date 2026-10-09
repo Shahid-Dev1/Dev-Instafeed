@@ -18,6 +18,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { z } from 'zod';
 import { ApiRequestError } from '../../lib/api';
 import { clientApi, errorMessage } from '../../lib/client';
+import { AiAssistant } from './AiAssistant';
 import { ConfigForm } from './ConfigForm';
 import { TargetingForm } from './TargetingForm';
 import { WidgetPreview } from './WidgetPreview';
@@ -142,6 +143,7 @@ export function WidgetEditor({ id, backHref }: { id: string; backHref: string })
               </>
             )}
           </fieldset>
+          <AiAssistant widgetId={id} config={config} onApply={setConfig} />
           <TargetingForm targeting={targeting} onChange={setTargeting} />
           <ConfigForm type={widget.type} config={config} update={(fn) => setConfig((c) => fn(c!))} />
         </div>

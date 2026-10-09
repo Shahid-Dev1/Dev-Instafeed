@@ -11,6 +11,10 @@ export class FakeProviders {
   igOembed: Record<string, { author_name: string; thumbnail_url: string }> = {};
   bunnyVideos: Record<string, { status: number; storageSize: number; length: number; width: number; height: number }> = {};
   bunnyUploads: Record<string, number> = {};
+  /** Next Claude response: a JSON-serializable structured output, or 'refusal'. */
+  aiOutput: unknown = null;
+  /** Integration endpoints respond with failure when true. */
+  integrationsFail = false;
   private guidCounter = 0;
   private tokenCounter = 0;
 
@@ -88,7 +92,28 @@ export class FakeProviders {
       }
       case 'scontent.cdninstagram.com':
         return new Response(new Uint8Array(4096), { headers: { 'content-length': '4096', 'content-type': 'video/mp4' } });
+      case 'www.google-analytics.com':
+        return json({ validationMessages: this.integrationsFail ? [{ description: 'Measurement ID not found' }] : [] });
+      case 'api.mixpanel.com':
+      case 'api-eu.mixpanel.com':
+      case 'api-in.mixpanel.com':
+        return json(this.integrationsFail ? { status: 0, error: 'token, missing or empty' } : { status: 1 });
+      case 'in1.api.clevertap.com':
+      case 'eu1.api.clevertap.com':
+        return json(this.integrationsFail ? { status: 'fail', error: 'Invalid passcode' } : { status: 'success', processed: 1, unprocessed: [] });
+      case 'api.anthropic.com': {
+        const refusal = this.aiOutput === 'refusal';
+        return json({
+          id: 'msg_test', type: 'message', role: 'assistant', model: 'claude-opus-5-5',
+          content: refusal ? [] : [{ type: 'text', text: JSON.stringify(this.aiOutput) }],
+          stop_reason: refusal ? 'refusal' : 'end_turn', stop_sequence: null,
+          usage: { input_tokens: 100, output_tokens: 50 },
+        });
+      }
       case 'graph.facebook.com': {
+        if (url.pathname.endsWith('/events')) {
+          return this.integrationsFail ? json({ error: { message: 'Invalid OAuth access token' } }, 400) : json({ events_received: 1, fbtrace_id: 'x' });
+        }
         const shortcode = /\/reel\/([^/]+)/.exec(url.searchParams.get('url') ?? '')?.[1] ?? '';
         const v = this.igOembed[shortcode];
         return v ? json(v) : json({ error: { message: 'not found' } }, 400);

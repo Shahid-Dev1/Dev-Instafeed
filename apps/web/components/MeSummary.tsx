@@ -7,7 +7,17 @@ import { ApiRequestError } from '../lib/api';
 import { OnboardingChecklist } from './OnboardingChecklist';
 import { clientApi, selectStore } from '../lib/client';
 
-export function MeSummary({ teamHref, productsHref, videosHref, widgetsHref, analyticsHref }: { teamHref: string; productsHref: string; videosHref: string; widgetsHref: string; analyticsHref: string }) {
+interface NavLinks {
+  teamHref: string;
+  productsHref: string;
+  videosHref: string;
+  widgetsHref: string;
+  analyticsHref: string;
+  integrationsHref: string;
+  settingsHref: string;
+}
+
+export function MeSummary({ teamHref, productsHref, videosHref, widgetsHref, analyticsHref, integrationsHref, settingsHref }: NavLinks) {
   const [me, setMe] = useState<Me | null>(null);
   const [error, setError] = useState<ApiRequestError | null>(null);
 
@@ -41,7 +51,13 @@ export function MeSummary({ teamHref, productsHref, videosHref, widgetsHref, ana
         <Link href={widgetsHref}>Widgets</Link>
         <Link href={videosHref}>Videos</Link>
         <Link href={productsHref}>Products</Link>
-        {hasRole(me.current.role, 'ADMIN') && <Link href={teamHref}>Manage team</Link>}
+        {hasRole(me.current.role, 'ADMIN') && (
+          <>
+            <Link href={teamHref}>Manage team</Link>
+            <Link href={integrationsHref}>Integrations</Link>
+            <Link href={settingsHref}>Settings</Link>
+          </>
+        )}
       </nav>
       <OnboardingChecklist links={{ products: productsHref, videos: videosHref, widgets: widgetsHref }} />
     </section>

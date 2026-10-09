@@ -181,7 +181,7 @@ export async function resetData(deps: Deps): Promise<void> {
   await deps.queues.videos.obliterate({ force: true });
   await deps.queues.analytics.obliterate({ force: true });
   await deps.rawDb.featureFlag.deleteMany({ where: { storeId: { not: null } } });
-  const keys = await deps.redis.keys('rl:*');
+  const keys = [...(await deps.redis.keys('rl:*')), ...(await deps.redis.keys('ai:quota:*'))];
   if (keys.length) await deps.redis.del(...keys);
 }
 

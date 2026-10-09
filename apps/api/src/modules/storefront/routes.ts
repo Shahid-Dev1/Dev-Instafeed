@@ -5,6 +5,7 @@ import type { Deps } from '../../deps.js';
 import { AppError, validate } from '../../lib/errors.js';
 import { productGid } from '../products/shopify-products.js';
 import { normalizeShopDomain } from '../shopify/shop-domain.js';
+import { storefrontIntegrations } from '../integrations/service.js';
 import { buildPayload } from '../widgets/service.js';
 import { verifyProxySignature } from './proxy-signature.js';
 
@@ -76,8 +77,12 @@ export function storefrontRoutes(deps: Deps) {
           const payload = await buildPayload(deps, storeId, { id: w.id, type: w.type, version: w.publishedVersion ?? w.version, config, videoIds: w.publishedVideoIds }, { productId: product?.id });
           if (payload.videos.length) widgets.push({ placement, payload });
         }
+        const [integrations, settings] = await Promise.all([
+          storefrontIntegrations(deps, storeId),
+          deps.db.storeSettings.findUnique({ where: { storeId }, select: { customCss: true } }),
+        ]);
         // Short shared caching keeps storefront load low while publishes still appear within a minute.
-        return reply.header('cache-control', 'public, max-age=60').send({ widgets });
+        return reply.header('cache-control', 'public, max-age=60').send({ widgets, integrations, customCss: settings?.customCss ?? '' });
       },
     );
   };

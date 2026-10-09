@@ -5,3 +5,4 @@ export * from './products.ts';
 export * from './videos.ts';
 export * from './widgets.ts';
 export * from './analytics.ts';
+export * from './integrations.ts';

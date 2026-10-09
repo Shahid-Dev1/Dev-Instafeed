@@ -78,6 +78,8 @@ model Store {
   dailyStats       DailyStat[]
   orders           Order[]
   settings         StoreSettings?
+  integrations     Integration[]
+  integrationLogs  IntegrationLog[]
 }
 
 model User {
@@ -483,7 +485,51 @@ model Order {
 model StoreSettings {
   storeId               String   @id
   attributionWindowDays Int      @default(7)
+  /// Validated CSS applied inside widget shadow roots only.
+  customCss             String   @default("")
   updatedAt             DateTime @updatedAt
 
   store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+}
+
+enum IntegrationKind {
+  GA4
+  GTM
+  META
+  MIXPANEL
+  CLEVERTAP
+}
+
+/// Analytics/marketing destination. publicConfig is safe for the storefront (ids only);
+/// secretsEnc (AES-256-GCM JSON) holds server-only credentials used for test events.
+model Integration {
+  id            String          @id @default(cuid())
+  storeId       String
+  kind          IntegrationKind
+  enabled       Boolean         @default(true)
+  publicConfig  Json
+  secretsEnc    String?
+  events        String[]
+  status        String          @default("NOT_TESTED") // NOT_TESTED | OK | ERROR
+  lastError     String?
+  lastCheckedAt DateTime?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@unique([storeId, kind])
+}
+
+model IntegrationLog {
+  id        String          @id @default(cuid())
+  storeId   String
+  kind      IntegrationKind
+  level     String          // info | error
+  message   String
+  createdAt DateTime        @default(now())
+
+  store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@index([storeId, kind, createdAt])
 }

@@ -34,6 +34,8 @@ const envSchema = z.object({
   INSTAGRAM_GRAPH_VERSION: z.string().regex(/^v\d+\.\d$/).default('v24.0'),
   /** "<app-id>|<client-token>" for Instagram oEmbed (requires Meta oEmbed Read approval). */
   META_OEMBED_TOKEN: optional(),
+  /** AI widget assistant (also requires the ai_assistant feature flag). */
+  ANTHROPIC_API_KEY: optional(),
   UPLOAD_MAX_MB: z.coerce.number().int().min(1).max(5000).default(500),
   QUEUE_PREFIX: z.string().regex(/^[a-z0-9-]+$/).default('ifq'),
   SESSION_TTL_DAYS: z.coerce.number().int().min(1).max(90).default(14),

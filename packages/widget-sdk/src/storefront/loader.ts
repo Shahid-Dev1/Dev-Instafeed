@@ -1,6 +1,7 @@
-import type { WidgetPayload } from '@instafeed/shared';
+import type { StorefrontIntegrations, WidgetPayload } from '@instafeed/shared';
 import { mountWidget } from '../render.ts';
 import { initAnalytics } from './analytics.ts';
+import { initForwarding } from './forwarding.ts';
 import { openPlayer } from './player.ts';
 import { shopProduct } from './popup.ts';
 import { track } from './events.ts';
@@ -22,11 +23,17 @@ function pageParams(elm: HTMLElement): Record<string, string> {
   );
 }
 
-async function fetchWidgets(proxy: string, params: Record<string, string>, attempt = 0): Promise<StorefrontWidget[]> {
+interface ProxyResponse {
+  widgets: StorefrontWidget[];
+  integrations?: StorefrontIntegrations;
+  customCss?: string;
+}
+
+async function fetchWidgets(proxy: string, params: Record<string, string>, attempt = 0): Promise<ProxyResponse> {
   try {
     const res = await fetch(`${proxy}/widgets?${new URLSearchParams(params)}`, { headers: { accept: 'application/json' }, credentials: 'same-origin' });
     if (!res.ok) throw new Error(String(res.status));
-    return ((await res.json()) as { widgets: StorefrontWidget[] }).widgets;
+    return (await res.json()) as ProxyResponse;
   } catch (e) {
     if (attempt < 1) {
       await new Promise((r) => setTimeout(r, 2000));
@@ -34,16 +41,17 @@ async function fetchWidgets(proxy: string, params: Record<string, string>, attem
     }
     // The storefront must never break: fail closed (render nothing) and log for developers.
     console.warn('[instafeed] widgets unavailable', e);
-    return [];
+    return { widgets: [] };
   }
 }
 
-function mount(host: HTMLElement, w: StorefrontWidget, hlsSrc: string | undefined) {
+function mount(host: HTMLElement, w: StorefrontWidget, hlsSrc: string | undefined, customCss: string | undefined) {
   const { payload } = w;
   const render = () =>
     mountWidget(host, payload, {
       device: device(),
       animatedPreviews: !reducedMotion(),
+      customCss,
       onEvent: (e) => {
         const index = Math.max(0, payload.videos.findIndex((v) => v.id === e.videoId));
         const video = payload.videos[index];
@@ -95,13 +103,15 @@ export function boot(doc: Document = document): void {
     loaded = true;
     observer?.disconnect();
     const ids = [...new Set(blocks.map((b) => b.dataset.widgetId!).filter(Boolean))];
-    const widgets = await fetchWidgets(proxy, { ...pageParams(anchor), ...(ids.length ? { ids: ids.join(',') } : {}), ...(embed ? { embed: '1' } : {}) });
+    const { widgets, integrations, customCss } = await fetchWidgets(proxy, { ...pageParams(anchor), ...(ids.length ? { ids: ids.join(',') } : {}), ...(embed ? { embed: '1' } : {}) });
+    // Forwarding starts before mounting so the first widget_impression is forwarded too.
+    if (integrations) initForwarding(integrations);
     for (const w of widgets) {
-      if (w.placement === 'block') blocks.filter((b) => b.dataset.widgetId === w.payload.id).forEach((b) => mount(b, w, hlsSrc));
+      if (w.placement === 'block') blocks.filter((b) => b.dataset.widgetId === w.payload.id).forEach((b) => mount(b, w, hlsSrc, customCss));
       else if (embed) {
         const host = doc.createElement('div');
         embed.append(host);
-        mount(host, w, hlsSrc);
+        mount(host, w, hlsSrc, customCss);
       }
     }
   };

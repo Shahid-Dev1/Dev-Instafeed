@@ -1,6 +1,8 @@
 import Link from 'next/link';
 import { AnalyticsDashboard } from '../../components/analytics/AnalyticsDashboard';
 import { MeSummary } from '../../components/MeSummary';
+import { CustomCssEditor } from '../../components/integrations/CustomCssEditor';
+import { IntegrationsManager } from '../../components/integrations/IntegrationsManager';
 import { ProductsBrowser } from '../../components/ProductsBrowser';
 import { VideoLibrary } from '../../components/videos/VideoLibrary';
 import { WidgetEditor } from '../../components/widgets/WidgetEditor';
@@ -12,8 +14,10 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   return (
     <main>
       <h1>Instafeed dashboard</h1>
-      <MeSummary teamHref="/dashboard?view=team" productsHref="/dashboard?view=products" videosHref="/dashboard?view=videos" widgetsHref="/dashboard?view=widgets" analyticsHref="/dashboard?view=analytics" />
+      <MeSummary teamHref="/dashboard?view=team" productsHref="/dashboard?view=products" videosHref="/dashboard?view=videos" widgetsHref="/dashboard?view=widgets" analyticsHref="/dashboard?view=analytics" integrationsHref="/dashboard?view=integrations" settingsHref="/dashboard?view=settings" />
       {view === 'analytics' && <AnalyticsDashboard />}
+      {view === 'integrations' && <IntegrationsManager />}
+      {view === 'settings' && <CustomCssEditor />}
       {view === 'widgets' && <WidgetListLinks />}
       {view === 'widget' && id && <WidgetEditor id={id} backHref="/dashboard?view=widgets" />}
       {view === 'videos' && (

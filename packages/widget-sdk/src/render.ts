@@ -12,6 +12,8 @@ export interface MountOptions {
   preview?: boolean;
   /** Use Bunny's lightweight animated preview image on cards (storefront, when autoplay is on and motion is allowed). */
   animatedPreviews?: boolean;
+  /** Merchant CSS (server-validated), scoped to this widget's shadow root. */
+  customCss?: string;
   onEvent?: (e: WidgetEvent) => void;
 }
 
@@ -33,7 +35,7 @@ export function mountWidget(host: HTMLElement, payload: WidgetPayload, opts: Mou
   if (!device.show) return { destroy: () => root.replaceChildren() };
 
   const wrap = el('div', { class: 'if', 'data-type': type.toLowerCase() });
-  root.append(el('style', {}, [widgetCss(c, opts.device, !!opts.preview)]), wrap);
+  root.append(el('style', {}, [widgetCss(c, opts.device, !!opts.preview) + (opts.customCss ? `\n/* merchant */\n${opts.customCss}` : '')]), wrap);
   if (c.style.title && type !== 'FLOATING') wrap.append(el('h2', { class: 'if-title' }, [c.style.title]));
 
   if (payload.videos.length === 0) {

@@ -56,11 +56,11 @@ Status key: `[x]` done (tests ran) · `[~]` code done, live test blocked · `[ ]
 - [~] Order webhook attribution. AC: duplicate deliveries give one order; DIRECT (line match, net of discounts, last touch), ASSISTED, NONE; configurable window with a late-event grace; cancelled and test orders excluded; JPY and KWD exponents. **Live: needs `orders/create` on the dev store and protected customer data level 1.**
 - [x] Reports, charts, filters, CSV. AC: summary, rates, zero-filled timeseries, top videos, products and widgets, widget filter, range validation, CSV with formula-injection protection, isolation and roles; dashboard chart with tooltip and table view.
 
-## Phase 8: Integrations and AI
-- [ ] GA4, GTM. AC: config validation, test event, no duplicate sends.
-- [ ] Meta Pixel, CleverTap, Mixpanel. AC: same, and consent is respected.
-- [ ] AI structured widget settings. AC: invalid AI output is rejected; preview happens before save; behind a flag.
-- [ ] Custom CSS and health checks. AC: sanitizer tests; health status shown.
+## Phase 8: Integrations and AI (code ✅, live provider tests need merchant credentials and an Anthropic key)
+- [x] GA4, GTM. AC: ID validation; GA4 test via the Measurement Protocol debug endpoint; GTM dataLayer; GA4 "via GTM" skips gtag (no duplicates); only `instafeed_*` events (no duplicate ecommerce events).
+- [x] Meta Pixel, CleverTap, Mixpanel. AC: validation; test events (Meta CAPI with test code, Mixpanel /track, CleverTap /1/upload by region); failures recorded with status, error and log; analytics consent gates GA4, GTM, Mixpanel and CleverTap; marketing consent gates Meta; secrets encrypted, never returned or sent to the storefront.
+- [~] AI structured widget settings. AC: `claude-opus-5-5` via SDK structured outputs plus server re-validation; unknown keys, bad colours and refusals rejected; returns a diff and never saves; 20/hour per store; audited; flag `ai_assistant` plus `ANTHROPIC_API_KEY`. **Live: needs a key.**
+- [x] Custom CSS and health checks. AC: CSS validator (HTML, @import, expression, javascript:, non-https url(), escapes, unbalanced braces) on client and server, scoped to the widget shadow root; per-integration status, last error and activity log in the UI.
 
 ## Phase 9: Billing and settings
 - [ ] Free, Starter, Growth, Pro. AC: plans seeded; App Pricing webhook sync.

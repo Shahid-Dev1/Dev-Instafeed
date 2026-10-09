@@ -49,8 +49,12 @@ Merchant API calls use `Authorization: Bearer <Shopify session token | dashboard
 - Ingestion: `POST /proxy/events` (App Proxy, signed, ≤50 events, returns 202) · `POST /pixel/events` (Web Pixel, known visitors only). See [ANALYTICS.md](ANALYTICS.md).
 
 ## Integrations, settings, billing
-- `GET|PUT /api/v1/integrations/:kind` · `POST /api/v1/integrations/:kind/test` · `DELETE /api/v1/integrations/:kind`
-- `GET|PATCH /api/v1/settings` (custom CSS, purchase flow, domains, attribution window)
+- `GET /api/v1/integrations` (Admin+) returns every kind with `{ connected, enabled, publicConfig, secretsSet[], events, status, lastError, logs }`. Secret values are never returned.
+- `PUT /api/v1/integrations/:kind` `{ enabled, publicConfig, secrets?, events }`. Kinds are GA4, GTM, META, MIXPANEL and CLEVERTAP. An omitted `secrets` keeps the stored values; `null` clears them. Configs are validated per kind (`integrationConfigSchemas`).
+- `POST /api/v1/integrations/:kind/test` returns `{ ok, message }` and updates status and log. `DELETE /api/v1/integrations/:kind`
+- `GET|PUT /api/v1/settings/custom-css` `{ customCss }` (Admin+, validated by `customCssSchema`)
+- `POST /api/v1/widgets/:id/ai` `{ prompt, config }` (Editor+, flag `ai_assistant`) returns `{ config, summary, changes[] }`. Nothing is saved.
+- The `/proxy/widgets` response also includes `integrations` (public ids and event allow-lists of enabled destinations) and `customCss`.
 - `GET /api/v1/billing` (plan, usage, limits) · `GET /api/v1/billing/manage-url`
 
 ## Webhooks (HMAC-verified and deduplicated on `X-Shopify-Webhook-Id`)

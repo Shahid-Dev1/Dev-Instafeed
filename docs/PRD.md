@@ -64,6 +64,8 @@ We never scrape or download third-party video files.
 | D8 | Package manager is pnpm workspaces. Node 24 LTS. |
 | D9 | Instagram Reels were added at the owner's request (2026-10-09) and use official Meta APIs only. Reels from the merchant's own connected account are copied to Bunny after the merchant confirms ownership. Public Reel links are embedded via oEmbed, never downloaded. Instagram Login does not expose `media_product_type`, so VIDEO posts are treated as Reels. Reels whose `media_url` is withheld (licensed audio) cannot be imported. |
 | D10 | Provider credentials are optional env vars. A missing provider shows as "not configured" rather than using placeholder keys. |
+| D11 | Integrations forward Instafeed-namespaced events to tags the merchant already has installed (we don't inject GA4, Meta or other base scripts). Standard ecommerce events are left to Shopify's channels to avoid double counting. |
+| D12 | The AI assistant uses `claude-opus-5-5` at low effort with structured outputs and server-side refusal fallback (`fallbacks: "default"`). |
 
 ## 8. Non-functional requirements
 - The storefront loader is ≤ 12 KB gzipped. Players are loaded only when visible (IntersectionObserver) or when the shopper interacts.
