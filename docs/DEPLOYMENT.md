@@ -13,6 +13,7 @@
 | YouTube Data API v3 key | Phase 4 | Owner has it |
 | Bunny Stream library (API key, library ID, CDN host, webhook secret) | Phase 4 | **Needed** |
 | TikTok developer app (Login Kit, Display API `user.info.basic`, `video.list`) | Phase 4 (flagged) | **Needed / approval pending** |
+| Meta app (Instagram API with Instagram Login; optional oEmbed Read) | Phase 4 (flagged) | **Needed / approval pending** |
 | Anthropic API key | Phase 8 (flagged) | **Needed** |
 | GA4 / Meta / Mixpanel / CleverTap | Phase 8 (merchant-supplied per store) | n/a |
 

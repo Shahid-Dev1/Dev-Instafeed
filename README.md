@@ -2,7 +2,7 @@
 
 A multi-tenant SaaS that lets D2C brands put shoppable videos on their Shopify storefronts. Videos can be uploads (Bunny Stream), YouTube Shorts or TikTok videos, each with tagged products, Add to Cart and revenue attribution.
 
-**Status:** Phases 0 to 3 are code-complete. The live install and sync on the dev store have not been confirmed yet. Phase 4 (video library) is next. See [docs/CHECKLIST.md](docs/CHECKLIST.md).
+**Status:** Phases 0 to 4 (plus Instagram Reels) are code-complete with automated tests. Live checks are waiting on credentials (Shopify install, Bunny, YouTube, TikTok, Meta). Phase 5 (widget builder) is next. See [docs/CHECKLIST.md](docs/CHECKLIST.md).
 
 ## Stack
 pnpm monorepo · Node 24 · TypeScript · Next.js 16 (`apps/web`) · Fastify 5 API and BullMQ worker (`apps/api`) · Prisma 7 / PostgreSQL 16 · Redis 7 · Zod schemas shared in `packages/shared`.

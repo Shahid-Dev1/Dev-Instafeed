@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 import { ApiRequestError } from '../lib/api';
 import { clientApi, selectStore } from '../lib/client';
 
-export function MeSummary({ teamHref, productsHref }: { teamHref: string; productsHref: string }) {
+export function MeSummary({ teamHref, productsHref, videosHref }: { teamHref: string; productsHref: string; videosHref: string }) {
   const [me, setMe] = useState<Me | null>(null);
   const [error, setError] = useState<ApiRequestError | null>(null);
 
@@ -36,6 +36,7 @@ export function MeSummary({ teamHref, productsHref }: { teamHref: string; produc
         <strong>{me.current.storeName ?? me.current.shopDomain}</strong> · your role: {me.current.role}
       </p>
       <nav style={{ display: 'flex', gap: 16 }}>
+        <Link href={videosHref}>Videos</Link>
         <Link href={productsHref}>Products</Link>
         {hasRole(me.current.role, 'ADMIN') && <Link href={teamHref}>Manage team</Link>}
       </nav>

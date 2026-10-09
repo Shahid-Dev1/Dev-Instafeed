@@ -26,12 +26,17 @@ Status key: `[x]` done (tests ran) · `[~]` code done, live test blocked · `[ ]
 - [x] Search UI. AC: search by title, handle or SKU, status filter, cursor pagination; isolation test. *Tagging products onto videos ships with videos in Phase 4.*
 - [x] Webhook updates and reconciliation. AC: create/update re-fetch from GraphQL (out-of-order safe); delete marks deleted; a full sync soft-deletes products Shopify no longer returns; nightly `reconcile-all` scheduler at 03:00 UTC.
 
-## Phase 4: Video library
-- [ ] Upload to Bunny with processing states. AC: TUS upload; a signed status webhook moves the video PENDING→READY or FAILED.
-- [ ] YouTube and Shorts import. AC: URL parser tests (watch/shorts/youtu.be/embed); non-embeddable or private videos are rejected.
-- [ ] TikTok URL import. AC: oEmbed import; invalid or unavailable URL errors.
-- [ ] TikTok OAuth and Display API (flag). AC: state verified, token refresh, revoke, pagination; live test blocked until approval.
-- [ ] Library operations. AC: search, filter, archive, delete, bulk, product/variant tags, duplicate detection.
+## Phase 4: Video library (code ✅, live provider tests blocked on credentials)
+- [~] Upload to Bunny with processing states. AC: pre-signed TUS (signature test); status is read from the Bunny API (PENDING→PROCESSING→READY/FAILED, abandoned uploads fail after 6h); webhook signature checked. **Live: blocked, needs a Bunny library.**
+- [~] YouTube and Shorts import. AC: URL parser tests; private, deleted and non-embeddable videos are rejected; daily availability recheck. **Live: blocked, needs YOUTUBE_API_KEY.**
+- [x] TikTok URL import. AC: oEmbed import, unavailable and short-link errors, daily recheck. (Uses public oEmbed with no key; not yet tried against live TikTok.)
+- [~] TikTok OAuth and Display API (flag). AC: single-use, expiring, provider-bound state; encrypted tokens; refresh; REAUTH on revoke; pagination; import only owned ids; disconnect revokes. **Live: blocked until the TikTok app is approved.**
+- [x] Library operations. AC: search, filter, sort, cursor pagination, archive/restore, delete (removes Bunny media), bulk tags, product/variant tagging validated against the store, duplicate detection (409), store isolation for every operation.
+
+## Instagram Reels (added at the owner's request)
+- [~] Connect a Business/Creator account (Instagram Login, `instagram_business_basic`), long-lived token, daily refresh, REAUTH handling. **Live: blocked, needs a Meta app and approval.**
+- [~] List Reels (VIDEO posts), flag non-importable ones (no `media_url`), require ownership confirmation, copy to Bunny, mark UNAVAILABLE if removed.
+- [~] Reel URL embed via Meta oEmbed (flag `instagram_oembed`). **Live: blocked, needs oEmbed Read approval.**
 
 ## Phase 5: Widget builder
 - [ ] Stories, Carousel, Floating/PIP (plus Banner, Grid, Gallery). AC: create, configure and preview each type.

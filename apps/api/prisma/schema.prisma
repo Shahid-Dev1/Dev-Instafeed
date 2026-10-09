@@ -65,9 +65,13 @@ model Store {
   memberships Membership[]
   sessions    Session[]
   auditLogs   AuditLog[]
-  products    Product[]
-  variants    Variant[]
-  syncRuns    SyncRun[]
+  products         Product[]
+  variants         Variant[]
+  syncRuns         SyncRun[]
+  videos           Video[]
+  videoProducts    VideoProduct[]
+  providerAccounts ProviderAccount[]
+  oauthStates      OAuthState[]
 }
 
 model User {
@@ -157,8 +161,9 @@ model Product {
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
 
-  store    Store     @relation(fields: [storeId], references: [id], onDelete: Cascade)
-  variants Variant[]
+  store         Store          @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  variants      Variant[]
+  videoProducts VideoProduct[]
 
   @@unique([storeId, shopifyId])
   @@index([storeId, deletedAt, title])
@@ -179,8 +184,9 @@ model Variant {
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
-  store   Store   @relation(fields: [storeId], references: [id], onDelete: Cascade)
-  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  store         Store          @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  product       Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
+  videoProducts VideoProduct[]
 
   @@unique([storeId, shopifyId])
   @@index([storeId, productId])
@@ -210,4 +216,115 @@ model SyncRun {
   store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
 
   @@index([storeId, createdAt])
+}
+
+enum VideoSource {
+  UPLOAD
+  YOUTUBE
+  TIKTOK_URL
+  TIKTOK_ACCOUNT
+  INSTAGRAM_ACCOUNT
+  INSTAGRAM_URL
+}
+
+enum VideoStatus {
+  PENDING
+  PROCESSING
+  READY
+  FAILED
+  UNAVAILABLE
+}
+
+/// A video in the merchant library. externalId is the provider id (Bunny guid, YouTube id, TikTok id, Instagram media id)
+/// and powers duplicate detection. Instagram account imports are copied into Bunny (bunnyVideoId) because media_url expires.
+model Video {
+  id            String      @id @default(cuid())
+  storeId       String
+  source        VideoSource
+  externalId    String
+  bunnyVideoId  String?
+  status        VideoStatus @default(PENDING)
+  statusMessage String?
+  title         String
+  durationSec   Float?
+  width         Int?
+  height        Int?
+  thumbnailUrl  String?
+  playbackUrl   String?     // HLS for Bunny-hosted media
+  embedUrl      String?     // official player URL for YouTube/TikTok/Instagram embeds
+  permalink     String?     // original post, for attribution
+  authorName    String?
+  tags          String[]
+  bytes         BigInt?
+  archivedAt    DateTime?
+  checkedAt     DateTime?
+  createdById   String?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  store    Store          @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  products VideoProduct[]
+
+  @@unique([storeId, source, externalId])
+  @@index([storeId, archivedAt, createdAt])
+  @@index([storeId, bunnyVideoId])
+}
+
+/// Products (optionally a specific variant) tagged on a video, in display order.
+model VideoProduct {
+  id        String  @id @default(cuid())
+  storeId   String
+  videoId   String
+  productId String
+  variantId String?
+  position  Int
+
+  store   Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  video   Video    @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  product Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  variant Variant? @relation(fields: [variantId], references: [id], onDelete: SetNull)
+
+  @@unique([storeId, videoId, productId])
+  @@index([storeId, productId])
+}
+
+enum Provider {
+  TIKTOK
+  INSTAGRAM
+}
+
+/// A merchant-authorized creator account (TikTok Login Kit / Instagram Login). Tokens are AES-256-GCM encrypted.
+model ProviderAccount {
+  id                    String    @id @default(cuid())
+  storeId               String
+  provider              Provider
+  externalUserId        String
+  username              String?
+  accessTokenEnc        String
+  accessTokenExpiresAt  DateTime
+  refreshTokenEnc       String?
+  refreshTokenExpiresAt DateTime?
+  scopes                String
+  status                String    @default("ACTIVE") // ACTIVE | REAUTH_REQUIRED
+  lastError             String?
+  connectedById         String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@unique([storeId, provider])
+}
+
+/// Single-use OAuth state for provider connections; only the SHA-256 of the state value is stored.
+model OAuthState {
+  id        String   @id @default(cuid())
+  stateHash String   @unique
+  storeId   String
+  userId    String
+  provider  Provider
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
 }

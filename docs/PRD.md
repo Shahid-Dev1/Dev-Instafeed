@@ -41,6 +41,8 @@ Internal support users are a separate `PlatformUser` table. They never share mer
 | YouTube / Shorts | URL import (Data API v3 metadata) | videoId, title, duration, thumbnails, embeddable flag | Official IFrame player |
 | TikTok URL | Public URL plus oEmbed | videoId, author, embed HTML/thumbnail | Official TikTok embed player |
 | TikTok account | Login Kit plus Display API `video.list` (feature flag `tiktok_display_api`) | videoId, metadata, embed_link | Official embed |
+| Instagram account | Instagram API with Instagram Login, `instagram_business_basic` (flag `instagram_api`). Business/Creator accounts only. | media id, caption, permalink. The merchant confirms ownership, and the owner's own Reel is copied to Bunny because `media_url` expires. | Bunny HLS, credited to the original permalink |
+| Instagram Reel URL | Meta oEmbed (flag `instagram_oembed`, needs the oEmbed Read feature) | shortcode, author, thumbnail | Official Instagram embed |
 
 We never scrape or download third-party video files.
 
@@ -60,6 +62,8 @@ We never scrape or download third-party video files.
 | D6 | AI assistant: Anthropic Claude (`claude-sonnet-5-5`). Output must validate against the `WidgetConfig` Zod schema, and the feature is behind flag `ai_assistant`. |
 | D7 | Local development uses native PostgreSQL 16 and Redis 7 in WSL (no Docker) |
 | D8 | Package manager is pnpm workspaces. Node 24 LTS. |
+| D9 | Instagram Reels were added at the owner's request (2026-10-09) and use official Meta APIs only. Reels from the merchant's own connected account are copied to Bunny after the merchant confirms ownership. Public Reel links are embedded via oEmbed, never downloaded. Instagram Login does not expose `media_product_type`, so VIDEO posts are treated as Reels. Reels whose `media_url` is withheld (licensed audio) cannot be imported. |
+| D10 | Provider credentials are optional env vars. A missing provider shows as "not configured" rather than using placeholder keys. |
 
 ## 8. Non-functional requirements
 - The storefront loader is ≤ 12 KB gzipped. Players are loaded only when visible (IntersectionObserver) or when the shopper interacts.

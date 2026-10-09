@@ -5,7 +5,7 @@ import { loadRootEnvFile } from '../src/config/load-env-file.js';
 export const TEST_SHOPIFY = { apiKey: 'test-api-key', apiSecret: 'test-api-secret' };
 
 /** Test env: always points at the dedicated test database, never the dev one. */
-export function testEnv(): Env {
+export function testEnv(overrides: Record<string, string | undefined> = {}): Env {
   loadRootEnvFile();
   const url = process.env.TEST_DATABASE_URL;
   if (!url) throw new Error('TEST_DATABASE_URL must be set to run tests');
@@ -20,5 +20,17 @@ export function testEnv(): Env {
     WEB_URL: 'http://localhost:3000',
     ENCRYPTION_KEY: Buffer.alloc(32, 7).toString('base64'),
     QUEUE_PREFIX: 'ifq-test',
+    // Test-only provider credentials; requests go to FakeProviders.
+    YOUTUBE_API_KEY: 'yt-test-key',
+    BUNNY_STREAM_LIBRARY_ID: '555',
+    BUNNY_STREAM_API_KEY: 'bunny-test-key',
+    BUNNY_STREAM_CDN_HOSTNAME: 'vz-test.b-cdn.net',
+    BUNNY_STREAM_WEBHOOK_KEY: 'bunny-webhook-key',
+    TIKTOK_CLIENT_KEY: 'tt-client',
+    TIKTOK_CLIENT_SECRET: 'tt-secret',
+    INSTAGRAM_APP_ID: 'ig-app',
+    INSTAGRAM_APP_SECRET: 'ig-secret',
+    META_OEMBED_TOKEN: 'app|client',
+    ...overrides,
   });
 }

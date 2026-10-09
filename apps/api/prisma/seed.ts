@@ -13,6 +13,8 @@ const PLANS = [
 const FLAGS = [
   { key: 'tiktok_display_api', enabled: false },
   { key: 'ai_assistant', enabled: false },
+  { key: 'instagram_api', enabled: false },
+  { key: 'instagram_oembed', enabled: false },
 ];
 
 export async function seed(db: Db): Promise<void> {

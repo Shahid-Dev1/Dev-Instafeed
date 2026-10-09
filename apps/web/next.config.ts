@@ -15,6 +15,7 @@ const config: NextConfig = {
       { source: '/api/:path*', destination: `${apiUrl}/api/:path*` },
       { source: '/webhooks/:path*', destination: `${apiUrl}/webhooks/:path*` },
       { source: '/health/:path*', destination: `${apiUrl}/health/:path*` },
+      { source: '/oauth/:path*', destination: `${apiUrl}/oauth/:path*` },
     ];
   },
   async headers() {

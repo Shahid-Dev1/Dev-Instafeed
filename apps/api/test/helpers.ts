@@ -4,6 +4,7 @@ import { buildApp } from '../src/app.js';
 import type { Deps } from '../src/deps.js';
 import { createDeps } from '../src/lib/deps-factory.js';
 import { TEST_SHOPIFY, testEnv } from './env.js';
+import { FakeProviders } from './fake-providers.js';
 
 export const ORIGIN = 'http://localhost:3000';
 
@@ -139,12 +140,15 @@ export interface TestContext {
   shopify: FakeShopify;
 }
 
-export async function createTestContext(): Promise<TestContext & { sleeps: number[] }> {
+export async function createTestContext(envOverrides: Record<string, string | undefined> = {}): Promise<TestContext & { sleeps: number[]; providers: FakeProviders }> {
   const shopify = new FakeShopify();
+  const providers = new FakeProviders();
   const sleeps: number[] = [];
-  const deps = { ...createDeps(testEnv(), shopify.fetch), sleep: async (ms: number) => void sleeps.push(ms) };
+  const route: typeof fetch = (input, init) =>
+    new URL(String(input)).hostname.endsWith('.myshopify.com') ? shopify.fetch(input, init) : providers.fetch(input, init);
+  const deps = { ...createDeps(testEnv(envOverrides), route), sleep: async (ms: number) => void sleeps.push(ms) };
   const app = await buildApp(deps);
-  return { deps, app, shopify, sleeps };
+  return { deps, app, shopify, sleeps, providers };
 }
 
 /** Clears all tenant and auth data (keeps seeded plans/flags) and rate-limit counters. */
@@ -153,6 +157,8 @@ export async function resetData(deps: Deps): Promise<void> {
     'TRUNCATE "AuditLog", "WebhookReceipt", "Session", "Membership", "User", "Store" RESTART IDENTITY CASCADE',
   );
   await deps.queues.products.obliterate({ force: true });
+  await deps.queues.videos.obliterate({ force: true });
+  await deps.rawDb.featureFlag.deleteMany({ where: { storeId: { not: null } } });
   const keys = await deps.redis.keys('rl:*');
   if (keys.length) await deps.redis.del(...keys);
 }

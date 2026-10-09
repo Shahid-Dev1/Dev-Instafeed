@@ -14,7 +14,7 @@ export function createDeps(env: Env, fetchFn: typeof fetch = fetch): Deps {
     db: withTenantGuard(rawDb),
     redis,
     fetch: fetchFn,
-    queues: { products: createQueue('products', redis, env.QUEUE_PREFIX) },
+    queues: { products: createQueue('products', redis, env.QUEUE_PREFIX), videos: createQueue('videos', redis, env.QUEUE_PREFIX) },
     sleep: (ms) => new Promise((r) => setTimeout(r, ms)),
     checks: {
       database: async () => void (await rawDb.$queryRaw`SELECT 1`),

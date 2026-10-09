@@ -18,11 +18,15 @@ Merchant API calls use `Authorization: Bearer <Shopify session token | dashboard
 - `GET /api/v1/products/sync/status` returns `{ syncRun | null }` (latest run).
 
 ## Videos
-- `GET /api/v1/videos?q=&source=&status=&tag=&archived=&sort=&cursor=`
-- `POST /api/v1/videos/uploads`: returns a Bunny TUS upload URL and signature. `POST /api/v1/videos/import` `{ url }` handles YouTube or TikTok.
-- `GET /api/v1/integrations/tiktok/connect`, `/callback`, `GET /api/v1/tiktok/videos?cursor=`, `POST /api/v1/tiktok/import` `{ ids[] }`, `DELETE /api/v1/integrations/tiktok`
+- `GET /api/v1/videos/capabilities`: which sources are configured or enabled, plus provider connection status.
+- `GET /api/v1/videos?q=&source=&status=&tag=&archived=&sort=newest|oldest|title&cursor=&limit=` returns `{ items, nextCursor }`. Each item includes its tagged `products[]`.
+- `GET /api/v1/videos/:id` · `PATCH /api/v1/videos/:id` `{ title?, tags? }` · `DELETE /api/v1/videos/:id`
+- `POST /api/v1/videos/import` `{ url }` (Editor+) accepts YouTube/Shorts, TikTok, or an Instagram Reel (flag). Returns 201, 400 when unavailable, or 409 for a duplicate (`details.videoId`).
+- `POST /api/v1/videos/uploads` `{ title, bytes, contentType, rightsConfirmed: true }` returns 201 `{ videoId, tus: { endpoint, headers } }`. The browser uploads straight to Bunny; the API key is never exposed. Then call `POST /api/v1/videos/:id/upload-complete`.
+- `PUT /api/v1/videos/:id/products` `[{ productId, variantId? }]` (up to 20, ordered) replaces the tags. Products must belong to the store and not be deleted, and a variant must belong to its product.
+- `POST /api/v1/videos/bulk` `{ action: archive|unarchive|delete|addTags|removeTags, ids[≤100], tags? }` returns `{ affected }`.
+- **Connections** (`tiktok` | `instagram`, behind feature flags): `POST /api/v1/connections/:p/start` (Admin+) returns `{ authorizeUrl }`. `GET /oauth/:p/callback` (public, single-use state) redirects back into the admin app. `GET /api/v1/connections/:p/videos?cursor=` and `POST /api/v1/connections/:p/import` `{ ids, rightsConfirmed? }` are Editor+. `DELETE /api/v1/connections/:p` (Admin+) revokes and disconnects.
 - `PATCH /api/v1/videos/:id` · `DELETE /api/v1/videos/:id` · `POST /api/v1/videos/bulk` `{ ids, action: archive|unarchive|delete|tag }`
-- `PUT /api/v1/videos/:id/products` `[{ productId, variantId?, position }]`
 
 ## Widgets
 - `GET|POST /api/v1/widgets` · `GET|PATCH|DELETE /api/v1/widgets/:id` · `POST /api/v1/widgets/:id/publish|unpublish`
@@ -42,7 +46,7 @@ Merchant API calls use `Authorization: Bearer <Shopify session token | dashboard
 - `GET /api/v1/billing` (plan, usage, limits) · `GET /api/v1/billing/manage-url`
 
 ## Webhooks (HMAC-verified and deduplicated on `X-Shopify-Webhook-Id`)
-`POST /webhooks/shopify` and `POST /webhooks/shopify/compliance` (configured in `shopify.app.toml`). Phase 2 handles `app/uninstalled`, `app/scopes_update`, `customers/data_request`, `customers/redact` and `shop/redact`. Later phases add `products/create|update|delete`, `orders/create`, `app_subscriptions/update` and the signature-verified Bunny video-status webhook (signature-verified).
+`POST /webhooks/shopify` and `POST /webhooks/shopify/compliance` (configured in `shopify.app.toml`). Phase 2 handles `app/uninstalled`, `app/scopes_update`, `customers/data_request`, `customers/redact` and `shop/redact`. Later phases add `products/create|update|delete`, `orders/create`, `app_subscriptions/update` and `POST /webhooks/bunny`. The Bunny webhook is checked with `X-BunnyStream-Signature` when `BUNNY_STREAM_WEBHOOK_KEY` is set, and is only ever a hint: the status is re-read from Bunny's API.
 
 ## Support (PlatformUser only, audited)
 - `GET /support/stores?q=` · `GET /support/stores/:id/diagnostics`

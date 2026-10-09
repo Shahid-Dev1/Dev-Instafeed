@@ -18,7 +18,7 @@ describe('database and seed', () => {
     await seed(db);
 
     expect(await db.plan.count()).toBe(4);
-    expect(await db.featureFlag.count({ where: { storeId: null } })).toBe(2);
+    expect(await db.featureFlag.count({ where: { storeId: null } })).toBe(4);
     const ai = await db.featureFlag.findFirst({ where: { key: 'ai_assistant', storeId: null } });
     expect(ai?.enabled).toBe(true);
     await db.featureFlag.updateMany({ where: { key: 'ai_assistant' }, data: { enabled: false } });

@@ -4,7 +4,7 @@ export default function EmbeddedHome() {
   return (
     <main>
       <h1>Instafeed</h1>
-      <MeSummary teamHref="/app/team" productsHref="/app/products" />
+      <MeSummary teamHref="/app/team" productsHref="/app/products" videosHref="/app/videos" />
     </main>
   );
 }

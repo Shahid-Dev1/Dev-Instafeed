@@ -16,7 +16,7 @@ export interface Deps {
   redis: Redis;
   fetch: FetchFn;
   checks: HealthChecks;
-  queues: { products: Queue };
+  queues: { products: Queue; videos: Queue };
   /** Injected so retry/backoff paths run instantly in tests. */
   sleep: (ms: number) => Promise<void>;
 }

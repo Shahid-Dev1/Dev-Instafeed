@@ -1,5 +1,9 @@
 import { z } from 'zod';
 
+/** Optional string; empty values count as unset so `KEY=` in .env disables a provider. */
+const optional = () =>
+  z.preprocess((v) => (v === '' ? undefined : v), z.string().min(1).optional());
+
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
@@ -16,6 +20,21 @@ const envSchema = z.object({
   ENCRYPTION_KEY: z
     .string()
     .refine((k) => Buffer.from(k, 'base64').length === 32, 'must be 32 bytes, base64-encoded'),
+  // Video providers. All optional: an unset provider is reported as "not configured" instead of failing at boot.
+  YOUTUBE_API_KEY: optional(),
+  BUNNY_STREAM_LIBRARY_ID: optional(),
+  BUNNY_STREAM_API_KEY: optional(),
+  BUNNY_STREAM_CDN_HOSTNAME: optional(),
+  /** Key used to verify X-BunnyStream-Signature (HMAC-SHA256 of the raw body). */
+  BUNNY_STREAM_WEBHOOK_KEY: optional(),
+  TIKTOK_CLIENT_KEY: optional(),
+  TIKTOK_CLIENT_SECRET: optional(),
+  INSTAGRAM_APP_ID: optional(),
+  INSTAGRAM_APP_SECRET: optional(),
+  INSTAGRAM_GRAPH_VERSION: z.string().regex(/^v\d+\.\d$/).default('v24.0'),
+  /** "<app-id>|<client-token>" for Instagram oEmbed (requires Meta oEmbed Read approval). */
+  META_OEMBED_TOKEN: optional(),
+  UPLOAD_MAX_MB: z.coerce.number().int().min(1).max(5000).default(500),
   QUEUE_PREFIX: z.string().regex(/^[a-z0-9-]+$/).default('ifq'),
   SESSION_TTL_DAYS: z.coerce.number().int().min(1).max(90).default(14),
 });

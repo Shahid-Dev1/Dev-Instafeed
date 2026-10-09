@@ -37,3 +37,11 @@ export async function clientApi<S extends z.ZodType>(path: string, schema: S, in
   }
   return apiFetch(window.location.origin, path, schema, { ...init, headers, credentials: 'same-origin' });
 }
+
+/** Navigates the top-level window (leaving the Shopify admin iframe), e.g. for provider OAuth consent screens. */
+export function openTopLevel(url: string): void {
+  window.open(url, '_top');
+}
+
+export const errorMessage = (e: unknown, fallback = 'Something went wrong') =>
+  e instanceof Error && e.message ? e.message : fallback;
