@@ -4,7 +4,7 @@ import type { PrismaClient } from '../generated/prisma/client.js';
  * Models owned by a store. Every query on them must be scoped by storeId.
  * Add each new tenant model here; the tenant-guard test fails if a model has a storeId column but is missing.
  */
-export const TENANT_MODELS = new Set<string>(['Membership', 'Product', 'Variant', 'SyncRun', 'Video', 'VideoProduct', 'ProviderAccount', 'OAuthState', 'Widget', 'WidgetVideo']);
+export const TENANT_MODELS = new Set<string>(['Membership', 'Product', 'Variant', 'SyncRun', 'Video', 'VideoProduct', 'ProviderAccount', 'OAuthState', 'Widget', 'WidgetVideo', 'AnalyticsEvent', 'DailyStat', 'Order', 'StoreSettings']);
 
 export class TenantScopeError extends Error {}
 

@@ -2,7 +2,12 @@
 
 declare global {
   interface Window {
-    Shopify?: { routes?: { root?: string }; currency?: { active?: string }; locale?: string };
+    Shopify?: {
+      routes?: { root?: string };
+      currency?: { active?: string };
+      locale?: string;
+      customerPrivacy?: { analyticsProcessingAllowed?: () => boolean };
+    };
   }
 }
 

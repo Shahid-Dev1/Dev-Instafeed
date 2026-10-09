@@ -6,7 +6,7 @@ application_url = "http://localhost:3000"
 embedded = true
 
 [access_scopes]
-scopes = "read_products,read_orders,read_themes"
+scopes = "read_products,read_orders,read_themes,write_pixels,read_customer_events"
 
 [auth]
 redirect_urls = ["http://localhost:3000/auth/shopify/callback"]
@@ -15,7 +15,7 @@ redirect_urls = ["http://localhost:3000/auth/shopify/callback"]
 api_version = "2026-10"
 
   [[webhooks.subscriptions]]
-  topics = ["app/uninstalled", "app/scopes_update", "products/create", "products/update", "products/delete"]
+  topics = ["app/uninstalled", "app/scopes_update", "products/create", "products/update", "products/delete", "orders/create", "orders/cancelled"]
   uri = "/webhooks/shopify"
 
   [[webhooks.subscriptions]]

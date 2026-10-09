@@ -1,0 +1,9 @@
+{
+  "name": "@instafeed/pixel",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": { "typecheck": "tsc --noEmit" },
+  "dependencies": { "@shopify/web-pixels-extension": "2.18.0" }
+}

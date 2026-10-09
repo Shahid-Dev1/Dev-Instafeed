@@ -50,11 +50,11 @@ Status key: `[x]` done (tests ran) · `[~]` code done, live test blocked · `[ ]
 - [x] Variants, popup, PDP redirect. AC: option-to-variant matching, sold-out disabled, preselected tagged variant, PDP with `?variant=` (DOM tests; e2e pending libs).
 - [~] Add to Cart, loading states and error recovery. AC: `/cart/add.js` body, confirmation and View cart, Shopify 422 messages, product-load retry, proxy failure fails closed with one retry (DOM tests). **Live: dev-store plan.**
 
-## Phase 7: Analytics and attribution
-- [ ] Ingestion and deduplication. AC: duplicate eventIds are stored once; schema version is checked.
-- [ ] Views, engagement, clicks, ATC. AC: aggregate job tests.
-- [ ] Order webhook attribution. AC: window boundary, duplicate order, delayed order, currency tests.
-- [ ] Reports, charts, filters, CSV. AC: timezone-correct day buckets; CSV export test.
+## Phase 7: Analytics and attribution (code ✅, live order test pending dev-store install)
+- [x] Ingestion and deduplication. AC: duplicate eventIds are stored and counted once; v1 strict schema; foreign ids dropped; clock clamping; signed proxy, text/plain beacon and the 50-event cap; pixel endpoint only for known visitors.
+- [x] Views, engagement, clicks, ATC. AC: storefront emits impressions, opens, start, pause, progress, complete, clicks, popup, variant and ATC (contract test against the server schema); consent respected; atomic daily counters in the store timezone.
+- [~] Order webhook attribution. AC: duplicate deliveries give one order; DIRECT (line match, net of discounts, last touch), ASSISTED, NONE; configurable window with a late-event grace; cancelled and test orders excluded; JPY and KWD exponents. **Live: needs `orders/create` on the dev store and protected customer data level 1.**
+- [x] Reports, charts, filters, CSV. AC: summary, rates, zero-filled timeseries, top videos, products and widgets, widget filter, range validation, CSV with formula-injection protection, isolation and roles; dashboard chart with tooltip and table view.
 
 ## Phase 8: Integrations and AI
 - [ ] GA4, GTM. AC: config validation, test event, no duplicate sends.

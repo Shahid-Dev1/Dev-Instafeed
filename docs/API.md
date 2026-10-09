@@ -41,9 +41,12 @@ Merchant API calls use `Authorization: Bearer <Shopify session token | dashboard
 - `GET /proxy/widgets?ids=&embed=1&page_type=&path=&product_id=&collection=` (+ Shopify's `shop`, `timestamp`, `signature`) returns `{ widgets: [{ placement: block|embed, payload }] }`. Blocks are returned by explicit id. The embed returns FLOATING widgets whose published targeting matches the page. Responses contain only published snapshots with READY videos, use `Cache-Control: public, max-age=60`, and are limited to 120 requests/min per IP.
 - `POST /proxy/events`: a batch of up to 50 versioned events (`v: 1`). Returns 202.
 
-## Analytics
-- `GET /api/v1/analytics/summary|timeseries|top-videos|top-products|widgets?from=&to=&widgetId=` (in store timezone)
-- `GET /api/v1/analytics/export.csv?report=&from=&to=`
+## Analytics (Analyst+; dates are YYYY-MM-DD in the store timezone; max 366 days)
+- `GET /api/v1/analytics/summary?from=&to=&widgetId=` returns `{ currency, timezone, attributionWindowDays, metrics, orders, rates }`.
+- `GET /api/v1/analytics/timeseries` returns `{ days[] }` with every day in range. `GET /api/v1/analytics/videos|products|widgets` returns `{ rows[] }`.
+- `GET /api/v1/analytics/export.csv?report=daily|videos|products|widgets&from=&to=`
+- `GET /api/v1/settings/attribution` · `PATCH` `{ attributionWindowDays: 1–30 }` (Admin+)
+- Ingestion: `POST /proxy/events` (App Proxy, signed, ≤50 events, returns 202) · `POST /pixel/events` (Web Pixel, known visitors only). See [ANALYTICS.md](ANALYTICS.md).
 
 ## Integrations, settings, billing
 - `GET|PUT /api/v1/integrations/:kind` · `POST /api/v1/integrations/:kind/test` · `DELETE /api/v1/integrations/:kind`

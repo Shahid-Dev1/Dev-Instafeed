@@ -4,6 +4,7 @@ import { Prisma } from '../../generated/prisma/client.js';
 import { hmacSha256, safeEqual } from '../../lib/crypto.js';
 import { AppError } from '../../lib/errors.js';
 import { audit } from '../audit/audit.js';
+import { enqueueAttribution, parseOrder } from '../analytics/orders.js';
 import { enqueueProductRefresh } from '../products/jobs.js';
 import { productGid } from '../products/shopify-products.js';
 import { normalizeShopDomain } from '../shopify/shop-domain.js';
@@ -27,6 +28,21 @@ const productChanged: Handler = async (tx, shop, payload, deps) => {
 };
 
 const handlers: Record<string, Handler> = {
+  /** Orders are recorded once (unique per store + order id); attribution runs later in a job. */
+  'orders/create': async (tx, shop, payload, deps) => {
+    const storeId = await activeStoreId(tx, shop);
+    const order = parseOrder(payload);
+    if (!storeId || !order) return;
+    const existing = await tx.order.findUnique({ where: { storeId_shopifyOrderId: { storeId, shopifyOrderId: order.shopifyOrderId } } });
+    if (existing) return;
+    const created = await tx.order.create({ data: { storeId, ...order } });
+    return () => enqueueAttribution(deps, storeId, created.id);
+  },
+  'orders/cancelled': async (tx, shop, payload) => {
+    const storeId = await activeStoreId(tx, shop);
+    if (!storeId || payload.id === undefined) return;
+    await tx.order.updateMany({ where: { storeId, shopifyOrderId: String(payload.id) }, data: { cancelledAt: new Date(String(payload.cancelled_at ?? new Date().toISOString())) } });
+  },
   'products/create': productChanged,
   'products/update': productChanged,
   'products/delete': async (tx, shop, payload) => {

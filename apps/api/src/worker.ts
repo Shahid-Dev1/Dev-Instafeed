@@ -3,6 +3,7 @@ import { parseEnv } from './config/env.js';
 import { loadRootEnvFile } from './config/load-env-file.js';
 import { closeDeps, createDeps } from './lib/deps-factory.js';
 import { createRedis } from './lib/redis.js';
+import { processAnalyticsJob } from './modules/analytics/jobs.js';
 import { processProductJob } from './modules/products/jobs.js';
 import { processVideoJob } from './modules/videos/jobs.js';
 
@@ -14,6 +15,7 @@ const connection = createRedis(deps.env.REDIS_URL);
 const workers = [
   new Worker('products', (job) => processProductJob(deps, job), { connection, prefix: deps.env.QUEUE_PREFIX, concurrency: 5 }),
   new Worker('videos', (job) => processVideoJob(deps, job), { connection, prefix: deps.env.QUEUE_PREFIX, concurrency: 5 }),
+  new Worker('analytics', (job) => processAnalyticsJob(deps, job), { connection, prefix: deps.env.QUEUE_PREFIX, concurrency: 10 }),
 ];
 for (const w of workers) {
   w.on('failed', (job, err) => {

@@ -7,7 +7,7 @@ import { ApiRequestError } from '../lib/api';
 import { OnboardingChecklist } from './OnboardingChecklist';
 import { clientApi, selectStore } from '../lib/client';
 
-export function MeSummary({ teamHref, productsHref, videosHref, widgetsHref }: { teamHref: string; productsHref: string; videosHref: string; widgetsHref: string }) {
+export function MeSummary({ teamHref, productsHref, videosHref, widgetsHref, analyticsHref }: { teamHref: string; productsHref: string; videosHref: string; widgetsHref: string; analyticsHref: string }) {
   const [me, setMe] = useState<Me | null>(null);
   const [error, setError] = useState<ApiRequestError | null>(null);
 
@@ -37,6 +37,7 @@ export function MeSummary({ teamHref, productsHref, videosHref, widgetsHref }: {
         <strong>{me.current.storeName ?? me.current.shopDomain}</strong> · your role: {me.current.role}
       </p>
       <nav style={{ display: 'flex', gap: 16 }}>
+        <Link href={analyticsHref}>Analytics</Link>
         <Link href={widgetsHref}>Widgets</Link>
         <Link href={videosHref}>Videos</Link>
         <Link href={productsHref}>Products</Link>

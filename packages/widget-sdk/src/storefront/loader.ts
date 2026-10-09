@@ -1,5 +1,6 @@
 import type { WidgetPayload } from '@instafeed/shared';
 import { mountWidget } from '../render.ts';
+import { initAnalytics } from './analytics.ts';
 import { openPlayer } from './player.ts';
 import { shopProduct } from './popup.ts';
 import { track } from './events.ts';
@@ -54,9 +55,25 @@ function mount(host: HTMLElement, w: StorefrontWidget, hlsSrc: string | undefine
         }
       },
     });
+  const seen = new Set<string>();
+  const observeVideos = () => {
+    // A video impression = its card at least half visible; counted once per page view.
+    if (!('IntersectionObserver' in window)) return;
+    const io = new IntersectionObserver((entries) => {
+      for (const e of entries) {
+        const id = (e.target as HTMLElement).dataset.videoId;
+        if (e.isIntersecting && id && !seen.has(id)) {
+          seen.add(id);
+          track('video_impression', { widgetId: payload.id, videoId: id });
+        }
+      }
+    }, { threshold: 0.5 });
+    host.shadowRoot?.querySelectorAll<HTMLElement>('[data-video-id]').forEach((n) => io.observe(n));
+  };
   render();
-  window.matchMedia?.(MOBILE).addEventListener?.('change', render);
-  track('widget_impression', { widgetId: payload.id, videos: payload.videos.length });
+  observeVideos();
+  window.matchMedia?.(MOBILE).addEventListener?.('change', () => { render(); observeVideos(); });
+  track('widget_impression', { widgetId: payload.id });
 }
 
 /**
@@ -69,6 +86,7 @@ export function boot(doc: Document = document): void {
   const anchor = embed ?? blocks[0];
   if (!anchor) return;
   const proxy = anchor.dataset.proxy || '/apps/instafeed';
+  initAnalytics(proxy);
   const hlsSrc = anchor.dataset.hlsSrc || blocks.find((b) => b.dataset.hlsSrc)?.dataset.hlsSrc;
   let loaded = false;
 

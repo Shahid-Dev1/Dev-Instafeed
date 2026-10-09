@@ -2,7 +2,7 @@
 
 A multi-tenant SaaS that lets D2C brands put shoppable videos on their Shopify storefronts. Videos can be uploads (Bunny Stream), YouTube Shorts or TikTok videos, each with tagged products, Add to Cart and revenue attribution.
 
-**Status:** Phases 0 to 6 are code-complete with automated tests (188 unit/integration plus 14 e2e written). Live checks are waiting on credentials and a dev-store install (see [docs/STOREFRONT_TEST_PLAN.md](docs/STOREFRONT_TEST_PLAN.md)). Phase 7 (analytics and attribution) is next. See [docs/CHECKLIST.md](docs/CHECKLIST.md).
+**Status:** Phases 0 to 7 are code-complete with automated tests (207 unit/integration plus 14 e2e written). Live checks are waiting on credentials and a dev-store install (see [docs/STOREFRONT_TEST_PLAN.md](docs/STOREFRONT_TEST_PLAN.md)). Phase 8 (integrations and AI) is next. See [docs/CHECKLIST.md](docs/CHECKLIST.md).
 
 ## Stack
 pnpm monorepo · Node 24 · TypeScript · Next.js 16 (`apps/web`) · Fastify 5 API and BullMQ worker (`apps/api`) · Prisma 7 / PostgreSQL 16 · Redis 7 · Zod schemas shared in `packages/shared`.
@@ -37,4 +37,4 @@ The settings are in [shopify.app.toml](shopify.app.toml) (scopes, webhooks, URLs
 - Env vars are validated at boot ([apps/api/src/config/env.ts](apps/api/src/config/env.ts)). An invalid config exits with the list of bad variables.
 
 ## Documentation
-[PRD](docs/PRD.md) · [Architecture](docs/ARCHITECTURE.md) · [Database](docs/DATABASE.md) · [API](docs/API.md) · [Security](docs/SECURITY.md) · [Testing](docs/TESTING.md) · [Deployment](docs/DEPLOYMENT.md) · [Checklist](docs/CHECKLIST.md) · [SOW](docs/SOW.md)
+[PRD](docs/PRD.md) · [Architecture](docs/ARCHITECTURE.md) · [Database](docs/DATABASE.md) · [API](docs/API.md) · [Security](docs/SECURITY.md) · [Analytics](docs/ANALYTICS.md) · [Testing](docs/TESTING.md) · [Deployment](docs/DEPLOYMENT.md) · [Checklist](docs/CHECKLIST.md) · [SOW](docs/SOW.md)

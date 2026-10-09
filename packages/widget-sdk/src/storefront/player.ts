@@ -88,6 +88,13 @@ export function openPlayer(payload: WidgetPayload, startIndex: number, opts: Pla
       video.muted = config.playback.muted;
       video.loop = config.playback.loop;
       video.addEventListener('playing', () => track('video_start', ctx), { once: true });
+      video.addEventListener('pause', () => !video.ended && track('video_pause', ctx));
+      const reached = new Set<number>();
+      video.addEventListener('timeupdate', () => {
+        if (!video.duration) return;
+        const pct = (video.currentTime / video.duration) * 100;
+        for (const q of [25, 50, 75]) if (pct >= q && !reached.has(q)) { reached.add(q); track('video_progress', { ...ctx, progress: q }); }
+      });
       video.addEventListener('ended', () => track('video_complete', ctx));
       video.addEventListener('error', () => fallback(v, 'This video could not be played.'));
       stage.append(video);

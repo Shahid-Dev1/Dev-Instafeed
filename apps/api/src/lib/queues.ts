@@ -2,7 +2,7 @@ import { Queue } from 'bullmq';
 import type { Redis } from 'ioredis';
 
 /** Queue names are the contract between the API (producers) and the worker (consumers). */
-export const QUEUE_NAMES = ['products', 'videos'] as const;
+export const QUEUE_NAMES = ['products', 'videos', 'analytics'] as const;
 export type QueueName = (typeof QUEUE_NAMES)[number];
 
 export function createQueue(name: QueueName, connection: Redis, prefix: string): Queue {

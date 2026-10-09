@@ -74,6 +74,10 @@ model Store {
   oauthStates      OAuthState[]
   widgets          Widget[]
   widgetVideos     WidgetVideo[]
+  events           AnalyticsEvent[]
+  dailyStats       DailyStat[]
+  orders           Order[]
+  settings         StoreSettings?
 }
 
 model User {
@@ -385,4 +389,101 @@ model WidgetVideo {
 
   @@unique([storeId, widgetId, videoId])
   @@index([storeId, videoId])
+}
+
+/// Raw storefront events (append-only), deduplicated on (storeId, eventId).
+model AnalyticsEvent {
+  id          String   @id @default(cuid())
+  storeId     String
+  eventId     String
+  v           Int
+  type        String
+  visitorId   String
+  widgetId    String?
+  videoId     String?
+  productId   String?
+  variantId   String?
+  quantity    Int?
+  value       BigInt?
+  currency    String?
+  progress    Int?
+  occurredAt  DateTime
+  receivedAt  DateTime @default(now())
+
+  store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@unique([storeId, eventId])
+  @@index([storeId, visitorId, occurredAt])
+  @@index([storeId, occurredAt])
+}
+
+/// Daily counters at the finest grain (widget × video × product; "" = not applicable), bucketed in the store timezone.
+/// Updated atomically with INSERT … ON CONFLICT DO UPDATE only for newly inserted (non-duplicate) events.
+model DailyStat {
+  storeId           String
+  date              DateTime @db.Date
+  widgetId          String   @default("")
+  videoId           String   @default("")
+  productId         String   @default("")
+  widgetImpressions Int      @default(0)
+  videoImpressions  Int      @default(0)
+  videoOpens        Int      @default(0)
+  videoStarts       Int      @default(0)
+  videoPauses       Int      @default(0)
+  videoProgress     Int      @default(0)
+  videoCompletes    Int      @default(0)
+  productClicks     Int      @default(0)
+  popupOpens        Int      @default(0)
+  variantSelects    Int      @default(0)
+  addToCarts        Int      @default(0)
+  addToCartValue    BigInt   @default(0)
+  checkoutStarts    Int      @default(0)
+
+  store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@id([storeId, date, widgetId, videoId, productId])
+}
+
+enum Attribution {
+  PENDING
+  DIRECT
+  ASSISTED
+  NONE
+}
+
+/// Orders from the orders/create webhook (shop currency, minor units). One row per Shopify order.
+model Order {
+  id                 String      @id @default(cuid())
+  storeId            String
+  shopifyOrderId     String
+  name               String?
+  createdAtShopify   DateTime
+  currency           String
+  totalMinor         BigInt
+  lineItems          Json        // [{ productGid, variantGid, quantity, amountMinor }]
+  visitorId          String?
+  test               Boolean     @default(false)
+  cancelledAt        DateTime?
+  attribution        Attribution @default(PENDING)
+  attributedMinor    BigInt      @default(0)
+  attributedWidgetId String?
+  attributedVideoId  String?
+  /// Direct revenue split per product: [{ productId, amountMinor }]
+  attributedLines    Json        @default("[]")
+  attributedAt       DateTime?
+  createdAt          DateTime    @default(now())
+
+  store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@unique([storeId, shopifyOrderId])
+  @@index([storeId, createdAtShopify])
+}
+
+/// Per-store settings (more fields arrive in Phase 9).
+model StoreSettings {
+  storeId               String   @id
+  attributionWindowDays Int      @default(7)
+  updatedAt             DateTime @updatedAt
+
+  store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
 }

@@ -7,6 +7,7 @@ import Fastify, { type FastifyError, type FastifyInstance } from 'fastify';
 import type { Deps } from './deps.js';
 import { AppError } from './lib/errors.js';
 import { TenantScopeError } from './lib/tenant-guard.js';
+import { analyticsRoutes, eventIngestRoutes } from './modules/analytics/routes.js';
 import { authRoutes } from './modules/auth/routes.js';
 import { healthRoutes } from './modules/health/routes.js';
 import { connectionRoutes } from './modules/connections/routes.js';
@@ -76,6 +77,8 @@ export async function buildApp(deps: Deps): Promise<FastifyInstance> {
   await app.register(connectionRoutes(deps));
   await app.register(widgetRoutes(deps));
   await app.register(storefrontRoutes(deps));
+  await app.register(eventIngestRoutes(deps));
+  await app.register(analyticsRoutes(deps));
   await app.register(bunnyWebhookRoutes(deps));
   await app.register(webhookRoutes(deps));
   return app;

@@ -18,15 +18,15 @@ All tenant tables carry a `storeId` foreign key, with an index starting with `st
 | ProviderAccount | storeId, provider (TIKTOK/INSTAGRAM), externalUserId, username, accessTokenEnc, accessTokenExpiresAt, refreshTokenEnc?, refreshTokenExpiresAt?, scopes, status (ACTIVE/REAUTH_REQUIRED), lastError | unique(storeId, provider), tokens encrypted | |
 | Widget | storeId, type (STORIES/CAROUSEL/FLOATING/BANNER/GRID/PRODUCT_GALLERY), name, status (DRAFT/PUBLISHED), config JSON, targeting JSON, version, publishedConfig, publishedTargeting, publishedVideoIds[], publishedVersion, publishedAt | Draft vs published snapshot; `version` for optimistic concurrency |
 | WidgetVideo | storeId, widgetId, videoId, position | Draft video order; unique(storeId, widgetId, videoId) |
-| AnalyticsEvent | storeId, eventId (unique per store), v, type, sessionId, widgetId?, videoId?, productId?, variantId?, value?, occurredAt, receivedAt, meta JSON | Raw events, deduplicated on (storeId,eventId) |
-| DailyStat | storeId, date (store timezone), widgetId?, videoId?, productId?, metric counters | Aggregates |
-| Order | storeId, shopifyOrderId (unique per store), totalMinor, currency, createdAtShopify, attributed (DIRECT/ASSISTED/NONE), attributedVideoId?, attributedMinor | Idempotent on webhook |
+| AnalyticsEvent | storeId, eventId, v, type, visitorId, widgetId?, videoId?, productId?, variantId?, quantity?, value? (minor), currency?, progress?, occurredAt, receivedAt | unique(storeId, eventId) |
+| DailyStat | PK(storeId, date, widgetId, videoId, productId) with "" for none; 12 counters plus addToCartValue | Store-local day; atomic increments |
+| Order | storeId, shopifyOrderId, name, createdAtShopify, currency, totalMinor, lineItems JSON, visitorId?, test, cancelledAt?, attribution (PENDING/DIRECT/ASSISTED/NONE), attributedMinor, attributedWidgetId?, attributedVideoId?, attributedLines JSON | unique(storeId, shopifyOrderId) |
 | WebhookReceipt | webhookId (unique), topic, shopDomain, receivedAt | Deduplication, written in the same transaction as the handler |
 | Integration | storeId, kind (GA4/GTM/META/CLEVERTAP/MIXPANEL), enabled, configEnc, status, lastError, lastCheckedAt | |
 | Plan | id (FREE/STARTER/GROWTH/PRO), limits JSON (videos, widgets, monthlyViews, storageGb), features[] | Seeded |
 | Subscription | storeId, planId, shopifySubscriptionId, status, currentPeriodEnd, graceUntil | |
 | UsageCounter | storeId, period (YYYY-MM), views, storageBytes | |
-| StoreSettings | storeId, customCss, purchaseFlow (POPUP/PDP), authorizedDomains[], attributionWindowDays | |
+| StoreSettings | storeId, attributionWindowDays (Phase 7); customCss, purchaseFlow, authorizedDomains (Phase 9) | |
 | FeatureFlag | key, storeId?, enabled | |
 | AuditLog | storeId?, actorType, actorId, action, target, meta, ip, at | Append-only |
 | PlatformUser | id, email, role (SUPPORT/ADMIN) | Internal staff |

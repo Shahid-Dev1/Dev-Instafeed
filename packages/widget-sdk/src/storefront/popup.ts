@@ -2,6 +2,7 @@ import type { PayloadVideo, WidgetConfig } from '@instafeed/shared';
 import { el, safeUrl } from '../dom.ts';
 import { openOverlay } from './overlay.ts';
 import { addToCart, fetchProduct, money, numericId, productUrl, root, StorefrontError, type AjaxProduct, type AjaxVariant } from './shopify.ts';
+import { tagCart } from './analytics.ts';
 import { track } from './events.ts';
 
 type PayloadProduct = PayloadVideo['products'][number];
@@ -73,6 +74,7 @@ export function openProductPopup(product: PayloadProduct, config: WidgetConfig, 
       try {
         await addToCart(variant.id, quantity);
         track('add_to_cart', { ...ctx, productId: product.id, variantId: String(variant.id), quantity, value: variant.price * quantity });
+        await tagCart();
         msg.replaceChildren(el('span', { class: 'pp-ok' }, ['Added to cart ✓ ']), el('a', { href: `${root()}cart` }, ['View cart']));
         document.dispatchEvent(new CustomEvent('instafeed:added-to-cart', { detail: { variantId: variant.id, quantity } }));
       } catch (e) {

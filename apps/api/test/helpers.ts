@@ -71,6 +71,8 @@ export class FakeShopify {
   throttleNext = 0;
   /** Main theme config/settings_data.json content per shop. */
   themeSettings: Record<string, string> = {};
+  /** Web pixel settings per shop (JSON string), mirroring webPixel / webPixelCreate / webPixelUpdate. */
+  pixels: Record<string, string> = {};
 
   private productNode(p: FakeProduct) {
     return {
@@ -130,7 +132,20 @@ export class FakeShopify {
           extensions: { cost: { requestedQueryCost: 520, throttleStatus: { currentlyAvailable: 20, restoreRate: 100 } } },
         });
       }
-      return Response.json({ data: this.graphql(shop, String(body.query), (body.variables ?? {}) as Record<string, unknown>) });
+      const q = String(body.query);
+      const vars = (body.variables ?? {}) as Record<string, string>;
+      if (q.includes('webPixelCreate') || q.includes('webPixelUpdate')) {
+        const op = q.includes('webPixelCreate') ? 'webPixelCreate' : 'webPixelUpdate';
+        if (op === 'webPixelCreate' && this.pixels[shop]) return Response.json({ data: { [op]: { userErrors: [{ code: 'TAKEN', message: 'Pixel already exists' }], webPixel: null } } });
+        this.pixels[shop] = vars.settings!;
+        return Response.json({ data: { [op]: { userErrors: [], webPixel: { id: 'gid://shopify/WebPixel/1' } } } });
+      }
+      if (q.includes('webPixel {')) {
+        return this.pixels[shop]
+          ? Response.json({ data: { webPixel: { id: 'gid://shopify/WebPixel/1', settings: this.pixels[shop] } } })
+          : Response.json({ errors: [{ message: 'No web pixel was found for this app.' }] });
+      }
+      return Response.json({ data: this.graphql(shop, q, vars) });
     }
     return new Response('not found', { status: 404 });
   };
@@ -164,6 +179,7 @@ export async function resetData(deps: Deps): Promise<void> {
   );
   await deps.queues.products.obliterate({ force: true });
   await deps.queues.videos.obliterate({ force: true });
+  await deps.queues.analytics.obliterate({ force: true });
   await deps.rawDb.featureFlag.deleteMany({ where: { storeId: { not: null } } });
   const keys = await deps.redis.keys('rl:*');
   if (keys.length) await deps.redis.del(...keys);

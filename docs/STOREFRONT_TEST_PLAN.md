@@ -28,4 +28,10 @@ Automated coverage: proxy and API (Vitest), the runtime in a DOM (happy-dom), an
 | 15 | Accessibility | Keyboard-only flow works; screen reader announces dialog names; reduced motion disables animated previews |
 | 16 | Markets/locales | On a `/fr` locale the proxy URL is `/fr/apps/instafeed` and links keep the locale |
 
+| 17 | Events | Network tab shows `POST /apps/instafeed/events` batches (sendBeacon on tab hide); Analytics shows opens and clicks within ~10s |
+| 18 | Cart tag | After a widget Add to Cart, `/cart.js` has `attributes._ifv` |
+| 19 | Checkout pixel | Start checkout: "Checkouts started" increases (requires the approved new scopes) |
+| 20 | Direct order | Complete a test order (Bogus Gateway) for the widget-added product: the order is DIRECT with line revenue after ~30s. Note test orders are excluded from reports, so verify on the Order row or with a real-payment-disabled store setting |
+| 21 | Consent | With analytics declined in the store's cookie banner, no events are sent and no `_ifv` is set |
+
 Record results (store, theme, browser, pass/fail, screenshots) in CHECKLIST.md.

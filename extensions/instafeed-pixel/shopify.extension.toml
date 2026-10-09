@@ -1,0 +1,24 @@
+type = "web_pixel_extension"
+name = "instafeed-pixel"
+runtime_context = "strict"
+uid = "d2e82ba1-e07f-0582-a58c-76494b6c9ffeb74ec5a4"
+
+# Analytics-only pixel: runs only when the visitor allows analytics processing.
+[customer_privacy]
+analytics = true
+marketing = false
+preferences = false
+sale_of_data = "disabled"
+
+[settings]
+type = "object"
+
+[settings.fields.endpoint]
+name = "Event endpoint"
+description = "Instafeed checkout event endpoint (set automatically)"
+type = "single_line_text_field"
+
+[settings.fields.shop]
+name = "Shop domain"
+description = "The store's myshopify.com domain (set automatically)"
+type = "single_line_text_field"

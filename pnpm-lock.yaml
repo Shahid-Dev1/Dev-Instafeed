@@ -116,6 +116,14 @@ importers:
         specifier: 19.3.0
         version: 19.3.0(@types/react@19.3.0)
 
+  extensions/instafeed-pixel:
+    dependencies:
+      '@shopify/web-pixels-extension':
+        specifier: 2.18.0
+        version: 2.18.0
+
+  extensions/instafeed-theme: {}
+
   packages/shared:
     dependencies:
       zod:
@@ -927,6 +935,9 @@ packages:
 
   '@rolldown/pluginutils@1.0.1':
     resolution: {integrity: sha512-2j9bGt5Jh8hj+vPtgzPtl72j0yRxHAyumoo6TNfAjsLB04UtpSvPbPcDcBMxz7n+9CYB0c1GxQFxYRg2jimqGw==}
+
+  '@shopify/web-pixels-extension@2.18.0':
+    resolution: {integrity: sha512-qHp93QKdxJ8UREzkYOje6343An2wvXLUF71uduahiTjBfYXQ7VqIAXoHCwzCnP3Kss1AXLpz7XPaKCRC0ONOTw==}
 
   '@standard-schema/spec@1.1.0':
     resolution: {integrity: sha512-l2aFy5jALhniG5HgqrD6jXLi/rUWrKvqN/qJx6yoJsgKhblVd+iqqU4RCXavm/jPityDo5TCvKMnpjKnOriy0w==}
@@ -2964,6 +2975,8 @@ snapshots:
     optional: true
 
   '@rolldown/pluginutils@1.0.1': {}
+
+  '@shopify/web-pixels-extension@2.18.0': {}
 
   '@standard-schema/spec@1.1.0': {}
 
