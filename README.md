@@ -2,7 +2,7 @@
 
 A multi-tenant SaaS that lets D2C brands put shoppable videos on their Shopify storefronts. Videos can be uploads (Bunny Stream), YouTube Shorts or TikTok videos, each with tagged products, Add to Cart and revenue attribution.
 
-**Status:** Phases 0 (requirements) and 1 (foundation) are complete. Phase 2 (auth and multi-tenancy) is next. See [docs/CHECKLIST.md](docs/CHECKLIST.md).
+**Status:** Phases 0, 1 and 2 are complete. Phase 2's live install on the dev store is waiting on an HTTPS tunnel. Phase 3 (product catalog) is next. See [docs/CHECKLIST.md](docs/CHECKLIST.md).
 
 ## Stack
 pnpm monorepo · Node 24 · TypeScript · Next.js 16 (`apps/web`) · Fastify 5 API and BullMQ worker (`apps/api`) · Prisma 7 / PostgreSQL 16 · Redis 7 · Zod schemas shared in `packages/shared`.
@@ -27,6 +27,9 @@ pnpm db:migrate && pnpm db:seed # the seed is idempotent
 
 Health: `GET /health` (liveness) and `GET /health/ready` (DB and Redis; returns 503 if either is down).
 The tests use `TEST_DATABASE_URL` (`instafeed_test`) and apply migrations automatically.
+
+## Shopify app
+The settings are in [shopify.app.toml](shopify.app.toml) (scopes, webhooks, URLs). The embedded entry point is `/app`. Install uses Shopify-managed install plus token exchange with expiring offline tokens; see [docs/SECURITY.md](docs/SECURITY.md). Local testing inside the Shopify admin needs HTTPS: run `shopify app dev`.
 
 ## Notes
 - `packages/shared` is consumed as TypeScript source using `.ts` import paths (`rewriteRelativeImportExtensions`). The built API loads it through Node 24's native type stripping.

@@ -1,44 +1,32 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import { buildApp } from '../src/app.js';
-import { createDb } from '../src/lib/db.js';
+import { closeDeps, createDeps } from '../src/lib/deps-factory.js';
 import { AppError, validate } from '../src/lib/errors.js';
-import { createRedis } from '../src/lib/redis.js';
 import { testEnv } from './env.js';
 
-const env = testEnv();
-const db = createDb(env.DATABASE_URL);
-const redis = createRedis(env.REDIS_URL);
-const realChecks = {
-  database: async () => void (await db.$queryRaw`SELECT 1`),
-  redis: async () => void (await redis.ping()),
-};
+const deps = createDeps(testEnv());
+const realChecks = deps.checks;
 
-afterAll(async () => {
-  await db.$disconnect();
-  await redis.quit();
-});
+afterAll(() => closeDeps(deps));
 
 describe('health endpoints (real PostgreSQL and Redis)', () => {
   it('GET /health is ok', async () => {
-    const app = await buildApp({ env, checks: realChecks });
+    const app = await buildApp(deps);
     const res = await app.inject({ method: 'GET', url: '/health' });
     expect(res.statusCode).toBe(200);
     expect(res.json()).toEqual({ status: 'ok' });
   });
 
   it('GET /health/ready reports database and redis ok', async () => {
-    const app = await buildApp({ env, checks: realChecks });
+    const app = await buildApp(deps);
     const res = await app.inject({ method: 'GET', url: '/health/ready' });
     expect(res.statusCode).toBe(200);
     expect(res.json()).toEqual({ status: 'ok', checks: { database: 'ok', redis: 'ok' } });
   });
 
   it('GET /health/ready returns 503 when a dependency fails', async () => {
-    const app = await buildApp({
-      env,
-      checks: { ...realChecks, database: async () => Promise.reject(new Error('down')) },
-    });
+    const app = await buildApp({ ...deps, checks: { ...realChecks, database: async () => Promise.reject(new Error('down')) } });
     const res = await app.inject({ method: 'GET', url: '/health/ready' });
     expect(res.statusCode).toBe(503);
     expect(res.json().checks).toEqual({ database: 'error', redis: 'ok' });
@@ -48,7 +36,7 @@ describe('health endpoints (real PostgreSQL and Redis)', () => {
 describe('error envelope', () => {
   let app: Awaited<ReturnType<typeof buildApp>>;
   beforeAll(async () => {
-    app = await buildApp({ env, checks: realChecks });
+    app = await buildApp(deps);
     app.post('/_test/validate', async (req) => validate(z.object({ name: z.string().min(1) }), req.body));
     app.get('/_test/forbidden', async () => {
       throw new AppError('FORBIDDEN', 'nope');

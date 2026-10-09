@@ -6,6 +6,11 @@ const valid = {
   WEB_URL: 'http://localhost:3000',
   DATABASE_URL: 'postgresql://u@localhost:5432/db',
   REDIS_URL: 'redis://localhost:6379',
+  SHOPIFY_API_KEY: 'k',
+  SHOPIFY_API_SECRET: 's',
+  SHOPIFY_SCOPES: 'read_products,read_orders',
+  SHOPIFY_APP_URL: 'https://app.example',
+  ENCRYPTION_KEY: Buffer.alloc(32).toString('base64'),
 };
 
 describe('parseEnv', () => {
@@ -24,5 +29,9 @@ describe('parseEnv', () => {
     expect(run).toThrow(EnvValidationError);
     expect(run).toThrow(/DATABASE_URL[\s\S]*REDIS_URL|REDIS_URL[\s\S]*DATABASE_URL/);
     expect(run).toThrow(/API_PORT/);
+  });
+
+  it('rejects an encryption key that is not 32 bytes', () => {
+    expect(() => parseEnv({ ...valid, ENCRYPTION_KEY: 'c2hvcnQ=' })).toThrow(/ENCRYPTION_KEY/);
   });
 });

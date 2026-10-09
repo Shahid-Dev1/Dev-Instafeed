@@ -1,17 +1,19 @@
+import cookie from '@fastify/cookie';
 import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
+import rateLimit from '@fastify/rate-limit';
 import type { ApiError } from '@instafeed/shared';
 import Fastify, { type FastifyError, type FastifyInstance } from 'fastify';
-import type { Env } from './config/env.js';
+import type { Deps } from './deps.js';
 import { AppError } from './lib/errors.js';
-import { healthRoutes, type HealthChecks } from './modules/health/routes.js';
+import { TenantScopeError } from './lib/tenant-guard.js';
+import { authRoutes } from './modules/auth/routes.js';
+import { healthRoutes } from './modules/health/routes.js';
+import { teamRoutes } from './modules/team/routes.js';
+import { webhookRoutes } from './modules/webhooks/routes.js';
 
-export interface AppDeps {
-  env: Env;
-  checks: HealthChecks;
-}
-
-export async function buildApp({ env, checks }: AppDeps): Promise<FastifyInstance> {
+export async function buildApp(deps: Deps): Promise<FastifyInstance> {
+  const { env } = deps;
   const app = Fastify({
     logger: {
       level: env.NODE_ENV === 'test' ? 'silent' : env.LOG_LEVEL,
@@ -21,8 +23,15 @@ export async function buildApp({ env, checks }: AppDeps): Promise<FastifyInstanc
     genReqId: () => crypto.randomUUID(),
   });
 
-  await app.register(helmet);
+  await app.register(helmet, {
+    // Shopify embeds the app in the admin, so framing must be allowed for Shopify origins only.
+    contentSecurityPolicy: { directives: { frameAncestors: ["'self'", 'https://admin.shopify.com', 'https://*.myshopify.com'] } },
+    frameguard: false,
+  });
   await app.register(cors, { origin: [env.WEB_URL], credentials: true });
+  await app.register(cookie);
+  await app.register(rateLimit, { global: false, redis: deps.redis, nameSpace: 'rl:' });
+  app.decorateRequest('ctx', null);
 
   app.setErrorHandler((err: FastifyError, req, reply) => {
     let body: ApiError;
@@ -30,6 +39,11 @@ export async function buildApp({ env, checks }: AppDeps): Promise<FastifyInstanc
     if (err instanceof AppError) {
       status = err.statusCode;
       body = { error: { code: err.code, message: err.message, details: err.details } };
+    } else if (err instanceof TenantScopeError) {
+      // A programming error: never let an unscoped tenant query run.
+      req.log.error({ err }, 'tenant scope violation');
+      status = 500;
+      body = { error: { code: 'INTERNAL', message: 'Internal server error' } };
     } else if (err.validation) {
       status = 400;
       body = { error: { code: 'VALIDATION_ERROR', message: err.message } };
@@ -49,6 +63,9 @@ export async function buildApp({ env, checks }: AppDeps): Promise<FastifyInstanc
     return reply.code(404).send(body);
   });
 
-  await app.register(healthRoutes(checks));
+  await app.register(healthRoutes(deps.checks));
+  await app.register(authRoutes(deps));
+  await app.register(teamRoutes(deps));
+  await app.register(webhookRoutes(deps));
   return app;
 }

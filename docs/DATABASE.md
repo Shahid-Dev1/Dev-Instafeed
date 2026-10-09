@@ -4,12 +4,12 @@ All tenant tables carry a `storeId` foreign key, with an index starting with `st
 
 | Entity | Key fields | Notes |
 |---|---|---|
-| Store | id, shopDomain (unique), name, currency, timezone, accessTokenEnc, scopes, installedAt, uninstalledAt, planId | Uninstall sets uninstalledAt and wipes the token. shop/redact deletes the store after 48h. |
-| User | id, email (unique), passwordHash?, name | |
+| Store | id, shopDomain (unique), name, currency, timezone, accessTokenEnc, accessTokenExpiresAt, refreshTokenEnc, refreshTokenExpiresAt, scopes, installedAt, uninstalledAt | Expiring offline tokens, encrypted. Uninstall sets uninstalledAt and wipes the tokens. shop/redact deletes the store (cascade). |
+| User | id, email? (unique), passwordHash? (scrypt), name, shopifyUserId? (unique, `shop:sub`) | |
 | Membership | storeId, userId, role (OWNER/ADMIN/EDITOR/ANALYST) | unique(storeId,userId) |
-| Session | id, userId, storeId, expiresAt, tokenHash | Dashboard session for email login |
+| Session | id, tokenHash (sha256, unique), userId, storeId?, expiresAt | Dashboard session for email login |
 | Invite | storeId, email, role, tokenHash, expiresAt | |
-| OAuthState | state, shopDomain, provider, expiresAt | Single use |
+| OAuthState | state, provider, storeId, expiresAt | Single use (Phase 4, TikTok) |
 | Product | storeId, shopifyId (gid), handle, title, status, imageUrl, priceMin/Max, updatedAtShopify, deletedAt | unique(storeId, shopifyId) |
 | Variant | storeId, productId, shopifyId, title, sku, price, available, options JSON | unique(storeId, shopifyId) |
 | SyncRun | storeId, kind, status, cursor, counts, error | |
@@ -21,7 +21,7 @@ All tenant tables carry a `storeId` foreign key, with an index starting with `st
 | AnalyticsEvent | storeId, eventId (unique per store), v, type, sessionId, widgetId?, videoId?, productId?, variantId?, value?, occurredAt, receivedAt, meta JSON | Raw events, deduplicated on (storeId,eventId) |
 | DailyStat | storeId, date (store timezone), widgetId?, videoId?, productId?, metric counters | Aggregates |
 | Order | storeId, shopifyOrderId (unique per store), totalMinor, currency, createdAtShopify, attributed (DIRECT/ASSISTED/NONE), attributedVideoId?, attributedMinor | Idempotent on webhook |
-| WebhookReceipt | storeId?, topic, webhookId (unique), receivedAt | Deduplication |
+| WebhookReceipt | webhookId (unique), topic, shopDomain, receivedAt | Deduplication, written in the same transaction as the handler |
 | Integration | storeId, kind (GA4/GTM/META/CLEVERTAP/MIXPANEL), enabled, configEnc, status, lastError, lastCheckedAt | |
 | Plan | id (FREE/STARTER/GROWTH/PRO), limits JSON (videos, widgets, monthlyViews, storageGb), features[] | Seeded |
 | Subscription | storeId, planId, shopifySubscriptionId, status, currentPeriodEnd, graceUntil | |

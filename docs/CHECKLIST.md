@@ -14,11 +14,11 @@ Status key: `[x]` done (tests ran) · `[~]` code done, live test blocked · `[ ]
 - [x] Prisma migrations and seed. AC: `pnpm db:migrate && pnpm db:seed` is idempotent.
 - [x] Lint, typecheck, tests, CI. AC: all green locally; the GitHub Actions workflow is present (it has not run yet because nothing is pushed).
 
-## Phase 2: Auth and multi-tenancy
-- [ ] Merchant registration and login. AC: register/login/logout tests; rate limit; argon2.
-- [ ] Shopify OAuth install and callback. AC: tests reject a bad HMAC, bad state and bad shop; the token is encrypted. Live install on the dev store.
-- [ ] Store, user and role model. AC: RBAC matrix tests for every role.
-- [ ] Isolation, sessions, uninstall. AC: Store A cannot read or modify Store B (tests); uninstall, reinstall and duplicate-webhook tests pass.
+## Phase 2: Auth and multi-tenancy (code ✅, live install blocked on HTTPS tunnel)
+- [x] Merchant registration and login. AC: register/login/logout tests; rate limit; scrypt; CSRF origin check.
+- [~] Shopify install (managed install plus token exchange, expiring tokens). AC: tests reject a forged, expired, wrong-audience or wrong-shop token; tokens are encrypted; refresh is single-flight. **Live install on the dev store: blocked, needs an HTTPS tunnel.**
+- [x] Store, user and role model. AC: RBAC matrix tests for every role.
+- [x] Isolation, sessions, uninstall. AC: Store A cannot read or modify Store B (tests); uninstall, reinstall, duplicate-webhook and GDPR webhook tests pass.
 
 ## Phase 3: Product catalog
 - [ ] GraphQL product and variant sync. AC: paginated sync test (more than 1 page) stores gids.

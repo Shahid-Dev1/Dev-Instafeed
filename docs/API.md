@@ -6,10 +6,10 @@ Merchant API calls use `Authorization: Bearer <Shopify session token | dashboard
 - `GET /health`: liveness. `GET /health/ready`: DB and Redis checks.
 
 ## Auth and stores
-- `GET /auth/shopify?shop=`: starts OAuth (creates a state). `GET /auth/shopify/callback`: verifies HMAC and state, exchanges the code and upserts the store.
-- `POST /api/v1/auth/register|login|logout`, `POST /api/v1/auth/invites/accept`
-- `GET /api/v1/me`: user, memberships, current store and role.
-- `GET|POST|PATCH|DELETE /api/v1/team[/:userId]` (Admin+)
+- **Embedded install/auth:** any `/api/v1/*` call with `Authorization: Bearer <App Bridge session token>`. The first call installs the store through token exchange; there is no separate OAuth route.
+- **Dashboard auth:** `POST /api/v1/auth/register` (201) · `POST /api/v1/auth/login` · `POST /api/v1/auth/logout`. These set or clear the `ifs_session` cookie. Optional `x-store-id` header selects a store the user belongs to.
+- `GET /api/v1/me`: `{ user, memberships[], current }` (`meSchema`).
+- `GET /api/v1/team` · `PATCH /api/v1/team/:userId` `{ role: ADMIN|EDITOR|ANALYST }` · `DELETE /api/v1/team/:userId`. All require Admin or above. The owner and the caller themselves cannot be changed. Invites arrive in Phase 9.
 
 ## Products (Editor+ for writes)
 - `GET /api/v1/products?q=&status=&cursor=` · `GET /api/v1/products/:id`
@@ -40,7 +40,7 @@ Merchant API calls use `Authorization: Bearer <Shopify session token | dashboard
 - `GET /api/v1/billing` (plan, usage, limits) · `GET /api/v1/billing/manage-url`
 
 ## Webhooks (HMAC-verified and deduplicated on `X-Shopify-Webhook-Id`)
-`app/uninstalled`, `products/create|update|delete`, `orders/create`, `app_subscriptions/update`, `customers/data_request`, `customers/redact`, `shop/redact`. Bunny video-status webhook (signature-verified).
+`POST /webhooks/shopify` and `POST /webhooks/shopify/compliance` (configured in `shopify.app.toml`). Phase 2 handles `app/uninstalled`, `app/scopes_update`, `customers/data_request`, `customers/redact` and `shop/redact`. Later phases add `products/create|update|delete`, `orders/create`, `app_subscriptions/update` and the signature-verified Bunny video-status webhook (signature-verified).
 
 ## Support (PlatformUser only, audited)
 - `GET /support/stores?q=` · `GET /support/stores/:id/diagnostics`

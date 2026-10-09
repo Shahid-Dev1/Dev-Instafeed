@@ -37,3 +37,101 @@ model FeatureFlag {
 
   @@unique([key, storeId])
 }
+
+enum Role {
+  OWNER
+  ADMIN
+  EDITOR
+  ANALYST
+}
+
+model Store {
+  id             String    @id @default(cuid())
+  shopDomain     String    @unique
+  name           String?
+  currency       String?
+  timezone       String?
+  // Expiring offline tokens (required for new public apps). AES-256-GCM, never leave the API.
+  accessTokenEnc        String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenEnc       String?
+  refreshTokenExpiresAt DateTime?
+  scopes         String?
+  installedAt    DateTime?
+  uninstalledAt  DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  memberships Membership[]
+  sessions    Session[]
+  auditLogs   AuditLog[]
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String?   @unique
+  passwordHash  String?
+  name          String?
+  shopifyUserId String?   @unique // "<shopDomain>:<sub>" from the admin session token
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  memberships Membership[]
+  sessions    Session[]
+}
+
+model Membership {
+  id        String   @id @default(cuid())
+  storeId   String
+  userId    String
+  role      Role
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([storeId, userId])
+  @@index([userId])
+}
+
+/// Email-login dashboard sessions. Only a SHA-256 hash of the opaque token is stored.
+model Session {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique
+  userId    String
+  storeId   String?
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  store Store? @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+/// Shopify delivers webhooks at least once; the webhook id makes processing idempotent.
+model WebhookReceipt {
+  id         String   @id @default(cuid())
+  webhookId  String   @unique
+  topic      String
+  shopDomain String
+  receivedAt DateTime @default(now())
+}
+
+/// Append-only. storeId is SET NULL on store deletion so entries survive for compliance.
+model AuditLog {
+  id        String   @id @default(cuid())
+  storeId   String?
+  actorType String   // USER | SHOPIFY | SYSTEM | SUPPORT
+  actorId   String?
+  action    String
+  target    String?
+  meta      Json?
+  ip        String?
+  createdAt DateTime @default(now())
+
+  store Store? @relation(fields: [storeId], references: [id], onDelete: SetNull)
+
+  @@index([storeId, createdAt])
+}

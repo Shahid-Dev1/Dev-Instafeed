@@ -1,0 +1,26 @@
+# Shopify CLI app configuration. The client_id is public; the secret lives only in .env.
+# Push with `shopify app deploy` (or `shopify app dev`, which also updates URLs to the tunnel).
+client_id = "298b8dc8f175b283f69a0c91e1b4f172"
+name = "Instafeed"
+application_url = "http://localhost:3000"
+embedded = true
+
+[access_scopes]
+scopes = "read_products,read_orders,read_themes"
+
+[auth]
+redirect_urls = ["http://localhost:3000/auth/shopify/callback"]
+
+[webhooks]
+api_version = "2026-10"
+
+  [[webhooks.subscriptions]]
+  topics = ["app/uninstalled", "app/scopes_update"]
+  uri = "/webhooks/shopify"
+
+  [[webhooks.subscriptions]]
+  compliance_topics = ["customers/data_request", "customers/redact", "shop/redact"]
+  uri = "/webhooks/shopify/compliance"
+
+[build]
+automatically_update_urls_on_dev = true

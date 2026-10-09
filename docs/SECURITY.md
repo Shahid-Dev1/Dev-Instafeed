@@ -1,14 +1,15 @@
 # Security, privacy and tenancy
 
-- **Shopify OAuth:** single-use `state` (10-minute TTL), constant-time HMAC check, shop domain regex `^[a-z0-9-]+\.myshopify\.com$`, offline token encrypted at rest.
-- **Embedded requests:** App Bridge session token (HS256 JWT signed with the app secret). We verify `aud`, `exp`, `nbf` and `dest`, then map it to the store.
-- **Email login:** argon2id hashes and an httpOnly SameSite=Lax secure cookie holding an opaque session token (hashed in DB). Login is rate-limited.
+- **Shopify install (Shopify-managed install plus token exchange):** Shopify shows the install and permission screen. On the first embedded request we exchange the App Bridge session token for an **expiring offline token** (`expiring=1`). Access tokens last 60 minutes and refresh tokens 90 days, as required for new public apps. Both tokens are encrypted with AES-256-GCM. Refresh runs under a Redis lock so the rotating refresh token cannot race. There is no redirect callback, so no OAuth `state` is involved. TikTok OAuth in Phase 4 will use single-use state.
+- **Embedded requests:** App Bridge session token (HS256 JWT signed with the app secret). We use constant-time signature checks, reject `alg` values other than HS256, and verify `exp`/`nbf` (5s leeway), `aud` = client id, and `iss` host = `dest` host = a valid `*.myshopify.com`. See [session-token.ts](../apps/api/src/modules/shopify/session-token.ts).
+- **Roles on install:** the first staff member to open the app becomes Owner. Later Shopify staff default to Editor; an Admin can change that.
+- **Email login:** scrypt hashes (N=2^15) and an httpOnly SameSite=Lax cookie (Secure in production) holding an opaque 256-bit token. Only its SHA-256 is stored. Unknown emails are checked against a dummy hash so timing does not reveal accounts. Login and register are limited to 10/min per IP+email (Redis). Cookie-authenticated mutations require our own `Origin` (CSRF).
 - **RBAC:** each route has a `minRole`. Server-side checks are authoritative, and the UI only hides controls.
-- **Tenant isolation:** context-scoped repositories plus a Prisma guard extension. Tests cover access between Store A and Store B for every resource.
-- **Webhooks and App Proxy:** HMAC is verified on the raw body or query, and `webhookId` deduplication makes processing idempotent.
+- **Tenant isolation:** the store comes only from the verified session token or a membership check, never from the request body. The `x-store-id` header is honoured only when the user has a membership in that store, and unknown and foreign stores return identical 403s. Store-owned models go through `withTenantGuard` ([tenant-guard.ts](../apps/api/src/lib/tenant-guard.ts)), which throws on any query without a concrete `storeId`. A test fails if a new model with `storeId` is not registered. Tests cover access between Store A and Store B.
+- **Webhooks and App Proxy:** HMAC is verified over the raw request bytes. The `WebhookReceipt` insert and the handler run in one transaction, so duplicates are skipped and failed handlers are retried by Shopify. On `app/uninstalled` we wipe the tokens and store sessions. On `shop/redact` we delete all store data, while audit entries are kept with `storeId` set to NULL.
 - **Secrets:** env only, validated at boot. `.env` is git-ignored. The Admin API token never reaches browser or storefront code.
 - **Storefront:** no secrets. The App Proxy limits data to published widgets. Events are rate-limited per IP and shop.
 - **AI:** output is JSON validated against the `WidgetConfig` schema. Custom CSS is sanitized (no `@import`, `url(javascript:)` or `expression`). No AI-generated JavaScript ever runs.
 - **Third-party video:** official APIs and embeds only, and we never download content.
-- **Privacy:** we store no shopper PII; events use a random session ID. We handle the GDPR webhooks, delete data 48h after `shop/redact`, and integrations honour the Shopify Customer Privacy API consent.
+- **Privacy:** we store no shopper PII; events use a random session ID. We handle the GDPR webhooks, delete all store data when `shop/redact` arrives (Shopify sends it 48h after uninstall), and integrations honour the Shopify Customer Privacy API consent.
 - **Audit log** entries cover role changes, integration changes, billing changes, deletions and all support-console access.
