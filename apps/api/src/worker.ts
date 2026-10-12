@@ -4,6 +4,7 @@ import { loadRootEnvFile } from './config/load-env-file.js';
 import { closeDeps, createDeps } from './lib/deps-factory.js';
 import { createRedis } from './lib/redis.js';
 import { processAnalyticsJob } from './modules/analytics/jobs.js';
+import { processBillingJob } from './modules/billing/jobs.js';
 import { processProductJob } from './modules/products/jobs.js';
 import { processVideoJob } from './modules/videos/jobs.js';
 
@@ -16,6 +17,7 @@ const workers = [
   new Worker('products', (job) => processProductJob(deps, job), { connection, prefix: deps.env.QUEUE_PREFIX, concurrency: 5 }),
   new Worker('videos', (job) => processVideoJob(deps, job), { connection, prefix: deps.env.QUEUE_PREFIX, concurrency: 5 }),
   new Worker('analytics', (job) => processAnalyticsJob(deps, job), { connection, prefix: deps.env.QUEUE_PREFIX, concurrency: 10 }),
+  new Worker('billing', (job) => processBillingJob(deps, job), { connection, prefix: deps.env.QUEUE_PREFIX, concurrency: 1 }),
 ];
 for (const w of workers) {
   w.on('failed', (job, err) => {
@@ -34,6 +36,8 @@ for (const w of workers) {
 await deps.queues.products.upsertJobScheduler('nightly-reconcile', { pattern: '0 3 * * *' }, { name: 'reconcile-all', data: {} });
 // Daily: embedded video availability/thumbnail checks, and Instagram long-lived token refresh.
 await deps.queues.videos.upsertJobScheduler('recheck-embeds', { pattern: '30 3 * * *' }, { name: 'recheck-embeds', data: {} });
+await deps.queues.billing.upsertJobScheduler('sync-all', { pattern: '15 2 * * *' }, { name: 'sync-all', data: {} });
+await deps.queues.billing.upsertJobScheduler('usage-all', { pattern: '5 * * * *' }, { name: 'usage-all', data: {} });
 await deps.queues.videos.upsertJobScheduler('refresh-provider-tokens', { pattern: '0 4 * * *' }, { name: 'refresh-provider-tokens', data: {} });
 
 const shutdown = async () => {

@@ -3,6 +3,7 @@ import type { Provider, ProviderAccount } from '../../generated/prisma/client.js
 import { decrypt, encrypt, randomToken, sha256 } from '../../lib/crypto.js';
 import { AppError } from '../../lib/errors.js';
 import { isEnabled, type FlagKey } from '../../lib/feature-flags.js';
+import { assertFeature } from '../billing/entitlements.js';
 import { instagram, instagramConfigured } from '../videos/providers/instagram.js';
 import { tiktok, tiktokConfigured } from '../videos/providers/tiktok.js';
 import { ReauthRequiredError, type OAuthTokens } from '../videos/providers/types.js';
@@ -20,6 +21,7 @@ export const redirectUri = (deps: Deps, p: ProviderSlug) => `${new URL(deps.env.
 export async function assertProviderAvailable(deps: Deps, storeId: string, p: ProviderSlug): Promise<void> {
   if (!(await isEnabled(deps.rawDb, FLAG[p], storeId))) throw new AppError('FORBIDDEN', `${p === 'tiktok' ? 'TikTok' : 'Instagram'} account import is not enabled`);
   if (!providerConfigured(deps, p)) throw new AppError('SERVICE_UNAVAILABLE', `${p === 'tiktok' ? 'TikTok' : 'Instagram'} is not configured`);
+  await assertFeature(deps, storeId, 'creator_accounts');
 }
 
 export async function providerEnabled(deps: Deps, storeId: string, p: ProviderSlug) {

@@ -8,7 +8,7 @@ All tenant tables carry a `storeId` foreign key, with an index starting with `st
 | User | id, email? (unique), passwordHash? (scrypt), name, shopifyUserId? (unique, `shop:sub`) | |
 | Membership | storeId, userId, role (OWNER/ADMIN/EDITOR/ANALYST) | unique(storeId,userId) |
 | Session | id, tokenHash (sha256, unique), userId, storeId?, expiresAt | Dashboard session for email login |
-| Invite | storeId, email, role, tokenHash, expiresAt | |
+| Invite | storeId, email, role, tokenHash (sha256, unique), invitedById, expiresAt, acceptedAt | One-time, 7 days |
 | OAuthState | stateHash (sha256, unique), storeId, userId, provider, expiresAt | Single use (consumed with DELETE … RETURNING), 10-minute TTL |
 | Product | storeId, shopifyId (gid), handle, title, status, imageUrl, priceMin/Max (decimal), totalVariants, shopifyUpdatedAt, syncedAt, deletedAt | unique(storeId, shopifyId). Soft-deleted (deletedAt) so video tags survive and restored products reappear. |
 | Variant | storeId, productId, shopifyId, title, sku, price (decimal), availableForSale, options JSON, imageUrl, position | unique(storeId, shopifyId). Variants removed in Shopify are hard-deleted. |
@@ -24,9 +24,9 @@ All tenant tables carry a `storeId` foreign key, with an index starting with `st
 | WebhookReceipt | webhookId (unique), topic, shopDomain, receivedAt | Deduplication, written in the same transaction as the handler |
 | Integration | storeId, kind (GA4/GTM/META/CLEVERTAP/MIXPANEL), enabled, configEnc, status, lastError, lastCheckedAt | |
 | Plan | id (FREE/STARTER/GROWTH/PRO), limits JSON (videos, widgets, monthlyViews, storageGb), features[] | Seeded |
-| Subscription | storeId, planId, shopifySubscriptionId, status, currentPeriodEnd, graceUntil | |
-| UsageCounter | storeId, period (YYYY-MM), views, storageBytes | |
-| StoreSettings | storeId, attributionWindowDays (Phase 7); customCss, purchaseFlow, authorizedDomains (Phase 9) | |
+| Subscription | storeId (PK), planId, status (ACTIVE/NONE/UNKNOWN), planHandle, billingPeriod, currentPeriodEnd, trialEndsAt, cancelAtEndOfCycle, pendingPlanHandle, overLimitSince, checkedAt | Cache of the Partner API `activeSubscription` |
+| (usage) | computed from DailyStat (videoOpens this month) and Video.bytes | No separate counter table |
+| StoreSettings | storeId, attributionWindowDays, customCss, defaultPurchaseFlow, authorizedDomains[] | |
 | FeatureFlag | key, storeId?, enabled | |
 | AuditLog | storeId?, actorType, actorId, action, target, meta, ip, at | Append-only |
-| PlatformUser | id, email, role (SUPPORT/ADMIN) | Internal staff |
+| PlatformRole | userId (PK), role (SUPPORT/ADMIN) | Internal staff; granted with `support:grant` |

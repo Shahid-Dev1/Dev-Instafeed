@@ -3,6 +3,7 @@ import type { Deps } from '../../deps.js';
 import { Prisma, type Video, type VideoSource } from '../../generated/prisma/client.js';
 import { AppError } from '../../lib/errors.js';
 import { isEnabled } from '../../lib/feature-flags.js';
+import { assertWithinLimit } from '../billing/entitlements.js';
 import type { StoreContext } from '../auth/context.js';
 import { bunny, mapBunnyStatus } from './providers/bunny.js';
 import { instagramOembed } from './providers/instagram.js';
@@ -60,6 +61,7 @@ export async function loadVideo(deps: Deps, storeId: string, id: string): Promis
 
 /** Inserts a video; the (store, source, externalId) unique key turns duplicates into a CONFLICT naming the existing video. */
 async function createVideo(deps: Deps, ctx: StoreContext, source: VideoSource, data: Omit<Prisma.VideoUncheckedCreateInput, 'storeId' | 'source'>) {
+  await assertWithinLimit(deps, ctx.storeId, 'videos');
   try {
     return await deps.db.video.create({ data: { ...data, storeId: ctx.storeId, source, createdById: ctx.userId }, include: VIDEO_INCLUDE });
   } catch (err) {
@@ -118,6 +120,8 @@ export async function createUpload(deps: Deps, ctx: StoreContext, input: { title
   if (input.bytes > deps.env.UPLOAD_MAX_MB * 1024 * 1024) {
     throw new AppError('VALIDATION_ERROR', `Files up to ${deps.env.UPLOAD_MAX_MB} MB are supported`, [{ path: 'bytes', message: 'Too large' }]);
   }
+  await assertWithinLimit(deps, ctx.storeId, 'videos');
+  await assertWithinLimit(deps, ctx.storeId, 'storageGb', input.bytes / 1024 ** 3);
   const guid = await bunny.createVideo(deps, input.title);
   const video = await createVideo(deps, ctx, 'UPLOAD', {
     externalId: guid,

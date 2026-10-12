@@ -48,6 +48,10 @@ enum Role {
 model Store {
   id             String    @id @default(cuid())
   shopDomain     String    @unique
+  /// gid://shopify/Shop/<id>, needed for Partner API subscription lookups.
+  shopGid        String?
+  /// Random public id for the headless (non-Shopify-domain) widget endpoint.
+  publicKey      String    @unique @default(dbgenerated("replace(gen_random_uuid()::text, '-', '')"))
   name           String?
   currency       String?
   timezone       String?
@@ -80,6 +84,8 @@ model Store {
   settings         StoreSettings?
   integrations     Integration[]
   integrationLogs  IntegrationLog[]
+  subscription     Subscription?
+  invites          Invite[]
 }
 
 model User {
@@ -91,8 +97,9 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  memberships Membership[]
-  sessions    Session[]
+  memberships  Membership[]
+  sessions     Session[]
+  platformRole PlatformRole?
 }
 
 model Membership {
@@ -487,6 +494,10 @@ model StoreSettings {
   attributionWindowDays Int      @default(7)
   /// Validated CSS applied inside widget shadow roots only.
   customCss             String   @default("")
+  /// Default CTA action for new widgets.
+  defaultPurchaseFlow   String   @default("POPUP")
+  /// Extra origins allowed to load widgets via the headless endpoint (https only).
+  authorizedDomains     String[]
   updatedAt             DateTime @updatedAt
 
   store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
@@ -532,4 +543,55 @@ model IntegrationLog {
   store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
 
   @@index([storeId, kind, createdAt])
+}
+
+/// Cached Shopify App Pricing state. Shopify is the source of truth (Partner API activeSubscription);
+/// no subscription means the Free plan.
+model Subscription {
+  storeId            String    @id
+  planId             PlanId    @default(FREE)
+  /// ACTIVE | NONE | UNKNOWN (Partner API not configured/unreachable)
+  status             String    @default("NONE")
+  planHandle         String?
+  billingPeriod      String?
+  currentPeriodEnd   DateTime?
+  trialEndsAt        DateTime?
+  cancelAtEndOfCycle Boolean   @default(false)
+  pendingPlanHandle  String?
+  /// First time this cycle usage exceeded the plan's monthly views (grace period start).
+  overLimitSince     DateTime?
+  checkedAt          DateTime?
+  updatedAt          DateTime  @updatedAt
+
+  store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+}
+
+model Invite {
+  id          String    @id @default(cuid())
+  storeId     String
+  email       String
+  role        Role
+  tokenHash   String    @unique
+  invitedById String
+  expiresAt   DateTime
+  acceptedAt  DateTime?
+  createdAt   DateTime  @default(now())
+
+  store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@index([storeId, email])
+}
+
+enum PlatformRoleKind {
+  SUPPORT
+  ADMIN
+}
+
+/// Internal staff access to the support console (granted via CLI only).
+model PlatformRole {
+  userId    String           @id
+  role      PlatformRoleKind
+  createdAt DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

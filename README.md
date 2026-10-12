@@ -2,7 +2,7 @@
 
 A multi-tenant SaaS that lets D2C brands put shoppable videos on their Shopify storefronts. Videos can be uploads (Bunny Stream), YouTube Shorts or TikTok videos, each with tagged products, Add to Cart and revenue attribution.
 
-**Status:** Phases 0 to 8 are code-complete with automated tests (236 unit/integration plus 14 e2e written). Live checks are waiting on credentials and a dev-store install (see [docs/STOREFRONT_TEST_PLAN.md](docs/STOREFRONT_TEST_PLAN.md)). Phase 9 (billing and settings) is next. See [docs/CHECKLIST.md](docs/CHECKLIST.md).
+**Status:** Phases 0 to 9 are code-complete with automated tests (251 unit/integration plus 14 e2e written). Live checks are waiting on credentials and a dev-store install (see [docs/STOREFRONT_TEST_PLAN.md](docs/STOREFRONT_TEST_PLAN.md)). Phase 10 (hardening and launch) is next. See [docs/CHECKLIST.md](docs/CHECKLIST.md).
 
 ## Stack
 pnpm monorepo · Node 24 · TypeScript · Next.js 16 (`apps/web`) · Fastify 5 API and BullMQ worker (`apps/api`) · Prisma 7 / PostgreSQL 16 · Redis 7 · Zod schemas shared in `packages/shared`.
@@ -24,6 +24,7 @@ pnpm db:migrate && pnpm db:seed # the seed is idempotent
 | `pnpm dev` | Dashboard on :3000, API on :4000 and the BullMQ worker (watch mode) |
 | `pnpm lint` · `pnpm typecheck` · `pnpm test` · `pnpm build` | Quality gates (CI runs all four plus e2e) |
 | `pnpm test:e2e` | Builds the storefront bundle and runs Playwright |
+| `pnpm --filter @instafeed/api support:grant <email>` | Grants support-console access (see docs/SUPPORT.md) |
 | `pnpm --filter @instafeed/widget-sdk build` | Rebuilds `extensions/instafeed-theme/assets/instafeed.js` (commit the result) |
 
 Health: `GET /health` (liveness) and `GET /health/ready` (DB and Redis; returns 503 if either is down).
@@ -37,4 +38,4 @@ The settings are in [shopify.app.toml](shopify.app.toml) (scopes, webhooks, URLs
 - Env vars are validated at boot ([apps/api/src/config/env.ts](apps/api/src/config/env.ts)). An invalid config exits with the list of bad variables.
 
 ## Documentation
-[PRD](docs/PRD.md) · [Architecture](docs/ARCHITECTURE.md) · [Database](docs/DATABASE.md) · [API](docs/API.md) · [Security](docs/SECURITY.md) · [Analytics](docs/ANALYTICS.md) · [Testing](docs/TESTING.md) · [Deployment](docs/DEPLOYMENT.md) · [Checklist](docs/CHECKLIST.md) · [SOW](docs/SOW.md)
+[PRD](docs/PRD.md) · [Architecture](docs/ARCHITECTURE.md) · [Database](docs/DATABASE.md) · [API](docs/API.md) · [Security](docs/SECURITY.md) · [Analytics](docs/ANALYTICS.md) · [Billing](docs/BILLING.md) · [Support](docs/SUPPORT.md) · [Testing](docs/TESTING.md) · [Deployment](docs/DEPLOYMENT.md) · [Checklist](docs/CHECKLIST.md) · [SOW](docs/SOW.md)

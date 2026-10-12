@@ -15,6 +15,7 @@
 | TikTok developer app (Login Kit, Display API `user.info.basic`, `video.list`) | Phase 4 (flagged) | **Needed / approval pending** |
 | Meta app (Instagram API with Instagram Login; optional oEmbed Read) | Phase 4 (flagged) | **Needed / approval pending** |
 | Anthropic API key | Phase 8 (flagged) | **Needed** |
+| App Pricing plans (handles free/starter/growth/pro), welcome link, Partner API client token | Phase 9 | **Needed** (docs/BILLING.md) |
 | GA4 / Meta / Mixpanel / CleverTap | Phase 8 (merchant-supplied per store) | n/a |
 
 ## Cost model (pilot, 10–20 brands, estimate)

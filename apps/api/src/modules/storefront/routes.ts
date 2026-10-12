@@ -1,18 +1,12 @@
-import { matchesTargeting, targetingSchema, widgetConfigSchema, type PageContext, type WidgetPayload } from '@instafeed/shared';
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import type { Deps } from '../../deps.js';
 import { AppError, validate } from '../../lib/errors.js';
-import { productGid } from '../products/shopify-products.js';
 import { normalizeShopDomain } from '../shopify/shop-domain.js';
-import { storefrontIntegrations } from '../integrations/service.js';
-import { buildPayload } from '../widgets/service.js';
 import { verifyProxySignature } from './proxy-signature.js';
+import { resolveStorefront } from './resolve.js';
 
-const PAGE_TYPES = new Set(['index', 'product', 'collection', 'page']);
-
-const querySchema = z.object({
-  shop: z.string(),
+const pageQuery = {
   /** Explicit widget ids from theme app blocks. */
   ids: z.string().max(400).optional(),
   /** "1" when the app embed asks for floating widgets matching this page. */
@@ -21,69 +15,40 @@ const querySchema = z.object({
   path: z.string().max(500).default('/'),
   product_id: z.string().regex(/^\d{1,20}$/).optional(),
   collection: z.string().max(100).optional(),
-});
-
-export interface StorefrontWidget {
-  placement: 'block' | 'embed';
-  payload: WidgetPayload;
-}
+};
+const proxyQuery = z.object({ shop: z.string(), ...pageQuery });
+const headlessQuery = z.object(pageQuery);
 
 /**
- * Public storefront data via the Shopify App Proxy (/apps/instafeed/*). Trust comes only from the proxy
- * signature; responses contain published snapshots only and never any credentials.
+ * Public storefront data. On Shopify domains it goes through the App Proxy (/apps/instafeed/*), where trust comes
+ * from the proxy signature. Headless storefronts use /public/v1/:publicKey/widgets, allowed only from the store's
+ * authorized domains (CORS). Responses never contain credentials.
  */
 export function storefrontRoutes(deps: Deps) {
   return async (app: FastifyInstance) => {
-    app.get(
-      '/proxy/widgets',
-      { config: { rateLimit: { max: 120, timeWindow: '1 minute' } } },
-      async (req, reply) => {
-        const rawQuery = req.url.split('?')[1] ?? '';
-        if (!verifyProxySignature(rawQuery, deps.env.SHOPIFY_API_SECRET)) throw new AppError('UNAUTHENTICATED', 'Invalid proxy signature');
-        const q = validate(querySchema, req.query);
-        const shop = normalizeShopDomain(q.shop);
-        const store = shop ? await deps.rawDb.store.findUnique({ where: { shopDomain: shop }, select: { id: true, uninstalledAt: true } }) : null;
-        if (!store || store.uninstalledAt) return reply.header('cache-control', 'no-store').send({ widgets: [] });
-        const storeId = store.id;
+    app.get('/proxy/widgets', { config: { rateLimit: { max: 120, timeWindow: '1 minute' } } }, async (req, reply) => {
+      if (!verifyProxySignature(req.url.split('?')[1] ?? '', deps.env.SHOPIFY_API_SECRET)) throw new AppError('UNAUTHENTICATED', 'Invalid proxy signature');
+      const q = validate(proxyQuery, req.query);
+      const shop = normalizeShopDomain(q.shop);
+      const store = shop ? await deps.rawDb.store.findUnique({ where: { shopDomain: shop }, select: { id: true, uninstalledAt: true } }) : null;
+      if (!store || store.uninstalledAt) return reply.header('cache-control', 'no-store').send({ widgets: [] });
+      // Short shared caching keeps storefront load low while publishes still appear within a minute.
+      return reply.header('cache-control', 'public, max-age=60').send(await resolveStorefront(deps, store.id, q));
+    });
 
-        const ids = (q.ids ?? '').split(',').map((s) => s.trim()).filter(Boolean).slice(0, 10);
-        const product = q.product_id
-          ? await deps.db.product.findUnique({ where: { storeId_shopifyId: { storeId, shopifyId: productGid(q.product_id) } }, select: { id: true } })
-          : null;
-        const page: PageContext = {
-          pageType: (PAGE_TYPES.has(q.page_type) ? q.page_type : 'other') as PageContext['pageType'],
-          path: q.path,
-          productId: product?.id ?? null,
-          collectionHandle: q.collection ?? null,
-        };
-
-        const rows = await deps.db.widget.findMany({
-          where: { storeId, status: 'PUBLISHED', OR: [{ id: { in: ids } }, ...(q.embed === '1' ? [{ type: 'FLOATING' as const }] : [])] },
-          orderBy: { publishedAt: 'desc' },
-        });
-        const taggedVideoIds = product
-          ? new Set((await deps.db.videoProduct.findMany({ where: { storeId, productId: product.id }, select: { videoId: true } })).map((t) => t.videoId))
-          : new Set<string>();
-
-        const widgets: StorefrontWidget[] = [];
-        for (const w of rows) {
-          const config = widgetConfigSchema.parse(w.publishedConfig);
-          const placement = ids.includes(w.id) ? 'block' : 'embed';
-          if (placement === 'embed') {
-            const targeting = targetingSchema.parse(w.publishedTargeting);
-            const productTagged = w.publishedVideoIds.some((id) => taggedVideoIds.has(id));
-            if (!matchesTargeting(targeting, { ...page, productTagged })) continue;
-          }
-          const payload = await buildPayload(deps, storeId, { id: w.id, type: w.type, version: w.publishedVersion ?? w.version, config, videoIds: w.publishedVideoIds }, { productId: product?.id });
-          if (payload.videos.length) widgets.push({ placement, payload });
-        }
-        const [integrations, settings] = await Promise.all([
-          storefrontIntegrations(deps, storeId),
-          deps.db.storeSettings.findUnique({ where: { storeId }, select: { customCss: true } }),
-        ]);
-        // Short shared caching keeps storefront load low while publishes still appear within a minute.
-        return reply.header('cache-control', 'public, max-age=60').send({ widgets, integrations, customCss: settings?.customCss ?? '' });
-      },
-    );
+    app.get('/public/v1/:publicKey/widgets', { config: { rateLimit: { max: 120, timeWindow: '1 minute' } } }, async (req, reply) => {
+      const { publicKey } = validate(z.object({ publicKey: z.string().regex(/^[a-f0-9]{32}$/) }), req.params);
+      const store = await deps.rawDb.store.findUnique({ where: { publicKey }, select: { id: true, uninstalledAt: true } });
+      const origin = req.headers.origin;
+      const settings = store ? await deps.db.storeSettings.findUnique({ where: { storeId: store.id }, select: { authorizedDomains: true } }) : null;
+      if (!store || store.uninstalledAt || !origin || !settings?.authorizedDomains.includes(origin)) {
+        throw new AppError('FORBIDDEN', 'This domain is not authorized to load widgets');
+      }
+      return reply
+        .header('access-control-allow-origin', origin)
+        .header('vary', 'Origin')
+        .header('cache-control', 'public, max-age=60')
+        .send(await resolveStorefront(deps, store.id, validate(headlessQuery, req.query)));
+    });
   };
 }

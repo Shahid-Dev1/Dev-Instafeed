@@ -34,6 +34,18 @@ const envSchema = z.object({
   INSTAGRAM_GRAPH_VERSION: z.string().regex(/^v\d+\.\d$/).default('v24.0'),
   /** "<app-id>|<client-token>" for Instagram oEmbed (requires Meta oEmbed Read approval). */
   META_OEMBED_TOKEN: optional(),
+  // Shopify App Pricing: subscription state comes from the Partner API (no billing webhooks exist).
+  SHOPIFY_PARTNER_ORG_ID: optional(),
+  SHOPIFY_PARTNER_API_TOKEN: optional(),
+  /** Numeric app id (Dev Dashboard URL) → gid://shopify/App/<id> for activeSubscription. */
+  SHOPIFY_APP_ID: optional(),
+  /** App handle used in the hosted plan selection page URL. */
+  SHOPIFY_APP_HANDLE: optional(),
+  SHOPIFY_PARTNER_API_VERSION: z.string().regex(/^\d{4}-\d{2}$/).default('2026-10'),
+  /** Local development only: plan to assume when the Partner API isn't configured. Ignored in production. */
+  BILLING_DEV_PLAN: z.enum(['FREE', 'STARTER', 'GROWTH', 'PRO']).optional(),
+  /** Days widgets keep serving after monthly views exceed the plan, before pausing. */
+  BILLING_GRACE_DAYS: z.coerce.number().int().min(0).max(30).default(7),
   /** AI widget assistant (also requires the ai_assistant feature flag). */
   ANTHROPIC_API_KEY: optional(),
   UPLOAD_MAX_MB: z.coerce.number().int().min(1).max(5000).default(500),

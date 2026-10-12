@@ -5,6 +5,7 @@ import type { Deps } from '../../deps.js';
 import { AppError, validate } from '../../lib/errors.js';
 import { audit } from '../audit/audit.js';
 import { authenticate, requireRole, storeCtx } from '../auth/context.js';
+import { assertFeature } from '../billing/entitlements.js';
 import { listIntegrations, logIntegration, runIntegrationTest, saveIntegration } from './service.js';
 
 const kindParams = z.object({ kind: z.enum(INTEGRATION_KINDS) });
@@ -18,6 +19,7 @@ export function integrationRoutes(deps: Deps) {
     app.put('/api/v1/integrations/:kind', admin, async (req) => {
       const ctx = storeCtx(req);
       const { kind } = validate(kindParams, req.params);
+      await assertFeature(deps, ctx.storeId, 'integrations');
       await saveIntegration(deps, ctx.storeId, kind, validate(saveIntegrationSchema, req.body));
       await audit(deps.rawDb, { storeId: ctx.storeId, actorType: 'USER', actorId: ctx.userId, action: 'integration.saved', target: kind, ip: req.ip });
       return { items: await listIntegrations(deps, ctx.storeId) };
@@ -47,6 +49,7 @@ export function integrationRoutes(deps: Deps) {
     app.put('/api/v1/settings/custom-css', admin, async (req) => {
       const ctx = storeCtx(req);
       const { customCss } = validate(z.object({ customCss: customCssSchema }).strict(), req.body);
+      if (customCss) await assertFeature(deps, ctx.storeId, 'custom_css');
       await deps.db.storeSettings.upsert({ where: { storeId: ctx.storeId }, create: { storeId: ctx.storeId, customCss }, update: { customCss } });
       await audit(deps.rawDb, { storeId: ctx.storeId, actorType: 'USER', actorId: ctx.userId, action: 'settings.custom_css', meta: { length: customCss.length }, ip: req.ip });
       return { customCss };

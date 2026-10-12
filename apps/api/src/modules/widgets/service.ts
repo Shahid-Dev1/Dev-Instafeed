@@ -12,6 +12,7 @@ import {
 import type { Deps } from '../../deps.js';
 import type { Prisma, Widget } from '../../generated/prisma/client.js';
 import { AppError } from '../../lib/errors.js';
+import { assertFeature, assertWithinLimit, WIDGET_FEATURE } from '../billing/entitlements.js';
 
 const WIDGET_INCLUDE = { videos: { orderBy: { position: 'asc' as const }, select: { videoId: true } } } satisfies Prisma.WidgetInclude;
 type WidgetRow = Prisma.WidgetGetPayload<{ include: typeof WIDGET_INCLUDE }>;
@@ -44,8 +45,13 @@ export async function loadWidget(deps: Deps, storeId: string, id: string): Promi
 }
 
 export async function createWidget(deps: Deps, storeId: string, name: string, type: WidgetType) {
+  await assertFeature(deps, storeId, WIDGET_FEATURE[type]!);
+  await assertWithinLimit(deps, storeId, 'widgets');
+  const settings = await deps.db.storeSettings.findUnique({ where: { storeId }, select: { defaultPurchaseFlow: true } });
+  const config = defaultWidgetConfig(type);
+  if (settings?.defaultPurchaseFlow === 'PDP') config.cta.action = 'PDP';
   const w = await deps.db.widget.create({
-    data: { storeId, name, type, config: defaultWidgetConfig(type), targeting: DEFAULT_TARGETING[type] },
+    data: { storeId, name, type, config, targeting: DEFAULT_TARGETING[type] },
     include: WIDGET_INCLUDE,
   });
   return w;
@@ -90,6 +96,7 @@ const playable = { status: 'READY' as const, archivedAt: null };
 /** Publishing snapshots the draft. Manual widgets need at least one playable video. */
 export async function publishWidget(deps: Deps, storeId: string, id: string) {
   const w = await loadWidget(deps, storeId, id);
+  await assertFeature(deps, storeId, WIDGET_FEATURE[w.type]!);
   const config = widgetConfigSchema.parse(w.config);
   const videoIds = w.videos.map((v) => v.videoId);
   if (config.source === 'manual') {

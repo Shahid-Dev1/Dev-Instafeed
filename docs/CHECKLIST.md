@@ -62,11 +62,11 @@ Status key: `[x]` done (tests ran) · `[~]` code done, live test blocked · `[ ]
 - [~] AI structured widget settings. AC: `claude-opus-5-5` via SDK structured outputs plus server re-validation; unknown keys, bad colours and refusals rejected; returns a diff and never saves; 20/hour per store; audited; flag `ai_assistant` plus `ANTHROPIC_API_KEY`. **Live: needs a key.**
 - [x] Custom CSS and health checks. AC: CSS validator (HTML, @import, expression, javascript:, non-https url(), escapes, unbalanced braces) on client and server, scoped to the widget shadow root; per-integration status, last error and activity log in the UI.
 
-## Phase 9: Billing and settings
-- [ ] Free, Starter, Growth, Pro. AC: plans seeded; App Pricing webhook sync.
-- [ ] Usage metering and entitlements. AC: server rejects over-limit requests with `PLAN_LIMIT`; 80% and 100% warnings.
-- [ ] Upgrade, downgrade, cancel. AC: transition, grace period and duplicate-event tests.
-- [ ] Domains, purchase flow, support tools. AC: audited support console; domain validation.
+## Phase 9: Billing and settings (code ✅, live billing needs App Pricing plans and Partner API credentials)
+- [~] Free, Starter, Growth and Pro plans. AC: seeded limits and features; Shopify App Pricing (no charges in code); Partner API `activeSubscription` sync (idempotent, audited plan changes, outage keeps last plan); welcome-link sync; daily sync. **Live: blocked, plans and Partner API token needed (docs/BILLING.md).**
+- [x] Usage metering and entitlement checks. AC: server-side `PLAN_LIMIT` for videos, widgets, storage and features at every creation, publish and feature endpoint; storefront drops non-entitled widget types; 80% warnings, over-limit grace period, pause and recovery (tests).
+- [x] Upgrade, downgrade and cancellation flows. AC: Shopify-hosted plan page (Owner only); `cancelAtEndOfCycle`, pending changes and trial shown; a lapsed subscription drops to Free; downgrade stops serving excluded widget types.
+- [x] Domains, purchase flow, team, support. AC: authorized https domains (normalized; http, wildcards and paths rejected) enforced by CORS on the headless endpoint; default purchase flow; invites (hashed one-time token, 7-day expiry, email-bound, Owner-only admin invites, revoke); support console (platform role via CLI, audited, no secrets) with runbook (docs/SUPPORT.md).
 
 ## Phase 10: Hardening and launch
 - [ ] Security and isolation audit · [ ] Performance and cross-device · [ ] App Store compliance · [ ] Production deployment, monitoring, pilot (requires approval)

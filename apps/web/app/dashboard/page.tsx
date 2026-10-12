@@ -1,6 +1,8 @@
 import Link from 'next/link';
 import { AnalyticsDashboard } from '../../components/analytics/AnalyticsDashboard';
 import { MeSummary } from '../../components/MeSummary';
+import { BillingPanel } from '../../components/billing/BillingPanel';
+import { StoreSettingsForm } from '../../components/StoreSettingsForm';
 import { CustomCssEditor } from '../../components/integrations/CustomCssEditor';
 import { IntegrationsManager } from '../../components/integrations/IntegrationsManager';
 import { ProductsBrowser } from '../../components/ProductsBrowser';
@@ -14,10 +16,11 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   return (
     <main>
       <h1>Instafeed dashboard</h1>
-      <MeSummary teamHref="/dashboard?view=team" productsHref="/dashboard?view=products" videosHref="/dashboard?view=videos" widgetsHref="/dashboard?view=widgets" analyticsHref="/dashboard?view=analytics" integrationsHref="/dashboard?view=integrations" settingsHref="/dashboard?view=settings" />
+      <MeSummary teamHref="/dashboard?view=team" productsHref="/dashboard?view=products" videosHref="/dashboard?view=videos" widgetsHref="/dashboard?view=widgets" analyticsHref="/dashboard?view=analytics" integrationsHref="/dashboard?view=integrations" settingsHref="/dashboard?view=settings" billingHref="/dashboard?view=billing" />
       {view === 'analytics' && <AnalyticsDashboard />}
       {view === 'integrations' && <IntegrationsManager />}
-      {view === 'settings' && <CustomCssEditor />}
+      {view === 'settings' && (<><StoreSettingsForm /><h2>Custom CSS</h2><CustomCssEditor /></>)}
+      {view === 'billing' && <BillingPanel />}
       {view === 'widgets' && <WidgetListLinks />}
       {view === 'widget' && id && <WidgetEditor id={id} backHref="/dashboard?view=widgets" />}
       {view === 'videos' && (

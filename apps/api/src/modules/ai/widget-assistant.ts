@@ -5,6 +5,7 @@ import { z } from 'zod';
 import type { Deps } from '../../deps.js';
 import { AppError } from '../../lib/errors.js';
 import { isEnabled } from '../../lib/feature-flags.js';
+import { assertFeature } from '../billing/entitlements.js';
 
 export const AI_MODEL = 'claude-opus-5-5';
 const HOURLY_LIMIT = 20;
@@ -43,6 +44,7 @@ export async function suggestWidgetConfig(
 ): Promise<AiWidgetResponse> {
   if (!(await isEnabled(deps.rawDb, 'ai_assistant', storeId))) throw new AppError('FORBIDDEN', 'The AI assistant is not enabled for this store');
   if (!deps.env.ANTHROPIC_API_KEY) throw new AppError('SERVICE_UNAVAILABLE', 'The AI assistant is not configured');
+  await assertFeature(deps, storeId, 'ai_assistant');
   await checkQuota(deps, storeId);
 
   const client = new Anthropic({ apiKey: deps.env.ANTHROPIC_API_KEY, fetch: deps.fetch, maxRetries: 1, timeout: 60_000 });

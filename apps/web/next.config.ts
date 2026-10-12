@@ -18,6 +18,9 @@ const config: NextConfig = {
       { source: '/oauth/:path*', destination: `${apiUrl}/oauth/:path*` },
       { source: '/proxy/:path*', destination: `${apiUrl}/proxy/:path*` },
       { source: '/pixel/:path*', destination: `${apiUrl}/pixel/:path*` },
+      { source: '/public/:path*', destination: `${apiUrl}/public/:path*` },
+      // Support API lives under /support-api so the /support page itself stays a dashboard route.
+      { source: '/support-api/:path*', destination: `${apiUrl}/support/:path*` },
     ];
   },
   async headers() {

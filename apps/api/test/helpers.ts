@@ -105,7 +105,7 @@ export class FakeShopify {
       const p = find();
       return { product: p ? this.productNode(p) : null };
     }
-    return { shop: { name: this.shopNames[shop] ?? shop, currencyCode: 'INR', ianaTimezone: 'Asia/Kolkata' } };
+    return { shop: { id: `gid://shopify/Shop/${Buffer.from(shop).toString('hex').slice(0, 12)}`, name: this.shopNames[shop] ?? shop, currencyCode: 'INR', ianaTimezone: 'Asia/Kolkata' } };
   }
 
   fetch: typeof fetch = async (input, init) => {
@@ -175,7 +175,7 @@ export async function createTestContext(envOverrides: Record<string, string | un
 /** Clears all tenant and auth data (keeps seeded plans/flags) and rate-limit counters. */
 export async function resetData(deps: Deps): Promise<void> {
   await deps.rawDb.$executeRawUnsafe(
-    'TRUNCATE "AuditLog", "WebhookReceipt", "Session", "Membership", "User", "Store" RESTART IDENTITY CASCADE',
+    'TRUNCATE "AuditLog", "WebhookReceipt", "Session", "Membership", "PlatformRole", "User", "Store" RESTART IDENTITY CASCADE',
   );
   await deps.queues.products.obliterate({ force: true });
   await deps.queues.videos.obliterate({ force: true });
@@ -230,9 +230,14 @@ export async function registerUser(app: FastifyInstance, email: string): Promise
   return `ifs_session=${cookie!.value}`;
 }
 
-/** Installs a shop via an embedded request and returns its store id. */
-export async function installShop(ctx: TestContext, shop: string, sub = '1'): Promise<string> {
+/**
+ * Installs a shop via an embedded request and returns its store id. Stores get the Pro plan unless a plan is given,
+ * so feature tests aren't constrained by Free-plan limits (billing tests choose plans explicitly).
+ */
+export async function installShop(ctx: TestContext, shop: string, sub = '1', plan: 'FREE' | 'STARTER' | 'GROWTH' | 'PRO' = 'PRO'): Promise<string> {
   const res = await ctx.app.inject({ method: 'GET', url: '/api/v1/me', headers: { authorization: `Bearer ${sessionToken(shop, sub)}` } });
   if (res.statusCode !== 200) throw new Error(`install failed: ${res.body}`);
-  return res.json().current.storeId as string;
+  const storeId = res.json().current.storeId as string;
+  await ctx.deps.db.subscription.upsert({ where: { storeId }, create: { storeId, planId: plan, status: 'UNKNOWN', checkedAt: new Date() }, update: { planId: plan } });
+  return storeId;
 }

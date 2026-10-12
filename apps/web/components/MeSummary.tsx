@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { ApiRequestError } from '../lib/api';
 import { OnboardingChecklist } from './OnboardingChecklist';
+import { UsageBanner } from './billing/BillingPanel';
 import { clientApi, selectStore } from '../lib/client';
 
 interface NavLinks {
@@ -15,9 +16,10 @@ interface NavLinks {
   analyticsHref: string;
   integrationsHref: string;
   settingsHref: string;
+  billingHref: string;
 }
 
-export function MeSummary({ teamHref, productsHref, videosHref, widgetsHref, analyticsHref, integrationsHref, settingsHref }: NavLinks) {
+export function MeSummary({ teamHref, productsHref, videosHref, widgetsHref, analyticsHref, integrationsHref, settingsHref, billingHref }: NavLinks) {
   const [me, setMe] = useState<Me | null>(null);
   const [error, setError] = useState<ApiRequestError | null>(null);
 
@@ -48,6 +50,7 @@ export function MeSummary({ teamHref, productsHref, videosHref, widgetsHref, ana
       </p>
       <nav style={{ display: 'flex', gap: 16 }}>
         <Link href={analyticsHref}>Analytics</Link>
+        <Link href={billingHref}>Plan</Link>
         <Link href={widgetsHref}>Widgets</Link>
         <Link href={videosHref}>Videos</Link>
         <Link href={productsHref}>Products</Link>
@@ -59,6 +62,7 @@ export function MeSummary({ teamHref, productsHref, videosHref, widgetsHref, ana
           </>
         )}
       </nav>
+      <UsageBanner billingHref={billingHref} />
       <OnboardingChecklist links={{ products: productsHref, videos: videosHref, widgets: widgetsHref }} />
     </section>
   );

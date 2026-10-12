@@ -37,13 +37,13 @@ export function needsInstall(store: Store | null, now = new Date()): boolean {
   );
 }
 
-const SHOP_QUERY = `query { shop { name currencyCode ianaTimezone } }`;
+const SHOP_QUERY = `query { shop { id name currencyCode ianaTimezone } }`;
 
 /** Shopify-managed install / reinstall: exchange the session token, store encrypted tokens, load shop details. */
 export async function installFromSessionToken(deps: Deps, shop: string, sessionToken: string): Promise<Store> {
   const creds = shopifyCreds(deps);
   const token = await exchangeSessionToken(deps.fetch, creds, shop, sessionToken);
-  const info = await adminGraphql<{ shop: { name: string; currencyCode: string; ianaTimezone: string } }>(
+  const info = await adminGraphql<{ shop: { id: string; name: string; currencyCode: string; ianaTimezone: string } }>(
     deps.fetch,
     creds,
     shop,
@@ -54,6 +54,7 @@ export async function installFromSessionToken(deps: Deps, shop: string, sessionT
   const existing = await deps.rawDb.store.findUnique({ where: { shopDomain: shop } });
   const data = {
     ...tokenFields(deps, token),
+    shopGid: info.shop.id,
     name: info.shop.name,
     currency: info.shop.currencyCode,
     timezone: info.shop.ianaTimezone,

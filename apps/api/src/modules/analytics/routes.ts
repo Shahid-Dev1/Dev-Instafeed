@@ -5,6 +5,7 @@ import type { Deps } from '../../deps.js';
 import { AppError, validate } from '../../lib/errors.js';
 import { audit } from '../audit/audit.js';
 import { authenticate, requireRole, storeCtx } from '../auth/context.js';
+import { assertFeature } from '../billing/entitlements.js';
 import { normalizeShopDomain } from '../shopify/shop-domain.js';
 import { verifyProxySignature } from '../storefront/proxy-signature.js';
 import { enqueueEvents } from './jobs.js';
@@ -63,7 +64,8 @@ const settingsSchema = z.object({ attributionWindowDays: z.number().int().min(1)
 
 export function analyticsRoutes(deps: Deps) {
   return async (app: FastifyInstance) => {
-    const read = { preHandler: [authenticate(deps), requireRole('ANALYST')] };
+    const gate = async (req: FastifyRequest) => assertFeature(deps, storeCtx(req).storeId, 'analytics');
+    const read = { preHandler: [authenticate(deps), requireRole('ANALYST'), gate] };
     const admin = { preHandler: [authenticate(deps), requireRole('ADMIN')] };
 
     app.get('/api/v1/analytics/summary', read, async (req) => summary(deps, storeCtx(req).storeId, validate(reportQuerySchema, req.query)));

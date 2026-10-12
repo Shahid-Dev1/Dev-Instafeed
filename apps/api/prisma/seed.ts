@@ -3,10 +3,10 @@ import { loadRootEnvFile } from '../src/config/load-env-file.js';
 import { createDb, type Db } from '../src/lib/db.js';
 
 const PLANS = [
-  { id: 'FREE', name: 'Free', priceMonthlyUsd: 0, limits: { videos: 10, widgets: 1, monthlyViews: 2_000, storageGb: 1 }, features: ['stories', 'carousel'] },
+  { id: 'FREE', name: 'Free', priceMonthlyUsd: 0, limits: { videos: 10, widgets: 1, monthlyViews: 2_000, storageGb: 1 }, features: ['stories', 'carousel', 'analytics'] },
   { id: 'STARTER', name: 'Starter', priceMonthlyUsd: 1900, limits: { videos: 50, widgets: 5, monthlyViews: 25_000, storageGb: 10 }, features: ['stories', 'carousel', 'floating', 'analytics'] },
   { id: 'GROWTH', name: 'Growth', priceMonthlyUsd: 4900, limits: { videos: 250, widgets: 20, monthlyViews: 150_000, storageGb: 50 }, features: ['stories', 'carousel', 'floating', 'banner', 'grid', 'gallery', 'analytics', 'integrations', 'custom_css'] },
-  { id: 'PRO', name: 'Pro', priceMonthlyUsd: 14900, limits: { videos: 2_000, widgets: 100, monthlyViews: 1_000_000, storageGb: 250 }, features: ['stories', 'carousel', 'floating', 'banner', 'grid', 'gallery', 'analytics', 'integrations', 'custom_css', 'ai_assistant', 'tiktok_account'] },
+  { id: 'PRO', name: 'Pro', priceMonthlyUsd: 14900, limits: { videos: 2_000, widgets: 100, monthlyViews: 1_000_000, storageGb: 250 }, features: ['stories', 'carousel', 'floating', 'banner', 'grid', 'gallery', 'analytics', 'integrations', 'custom_css', 'ai_assistant', 'creator_accounts'] },
 ] as const;
 
 /** Features requiring external approval or credentials default to off. */

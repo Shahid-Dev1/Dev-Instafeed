@@ -13,6 +13,9 @@ export class FakeProviders {
   bunnyUploads: Record<string, number> = {};
   /** Next Claude response: a JSON-serializable structured output, or 'refusal'. */
   aiOutput: unknown = null;
+  /** Partner API activeSubscription per shop gid (missing key = no subscription). */
+  partnerSubs: Record<string, unknown> = {};
+  partnerFail = false;
   /** Integration endpoints respond with failure when true. */
   integrationsFail = false;
   private guidCounter = 0;
@@ -92,6 +95,12 @@ export class FakeProviders {
       }
       case 'scontent.cdninstagram.com':
         return new Response(new Uint8Array(4096), { headers: { 'content-length': '4096', 'content-type': 'video/mp4' } });
+      case 'partners.shopify.com': {
+        if (this.partnerFail) return new Response('unavailable', { status: 503 });
+        if (new Headers(init?.headers).get('x-shopify-access-token') !== 'prtapi_test') return json({ errors: [{ message: 'Unauthorized' }] }, 401);
+        const vars = (JSON.parse(body ?? '{}') as { variables: { shopId: string } }).variables;
+        return json({ data: { activeSubscription: this.partnerSubs[vars.shopId] ?? null } });
+      }
       case 'www.google-analytics.com':
         return json({ validationMessages: this.integrationsFail ? [{ description: 'Measurement ID not found' }] : [] });
       case 'api.mixpanel.com':
