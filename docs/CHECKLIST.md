@@ -68,8 +68,11 @@ Status key: `[x]` done (tests ran) · `[~]` code done, live test blocked · `[ ]
 - [x] Upgrade, downgrade and cancellation flows. AC: Shopify-hosted plan page (Owner only); `cancelAtEndOfCycle`, pending changes and trial shown; a lapsed subscription drops to Free; downgrade stops serving excluded widget types.
 - [x] Domains, purchase flow, team, support. AC: authorized https domains (normalized; http, wildcards and paths rejected) enforced by CORS on the headless endpoint; default purchase flow; invites (hashed one-time token, 7-day expiry, email-bound, Owner-only admin invites, revoke); support console (platform role via CLI, audited, no secrets) with runbook (docs/SUPPORT.md).
 
-## Phase 10: Hardening and launch
-- [ ] Security and isolation audit · [ ] Performance and cross-device · [ ] App Store compliance · [ ] Production deployment, monitoring, pilot (requires approval)
+## Phase 10: Hardening and launch (prepared ✅; deployment awaits owner approval)
+- [x] Security and isolation testing. AC: route-inventory test (401 on every non-public route), cross-store GET leak test, `shop/redact` removes all store-owned rows, secrets scan of tree and history, `pnpm audit` clean, security headers.
+- [~] Cross-device and storefront performance. AC: bundle 9.3 KB gzip (budget test), lazy players, reduced motion. **Playwright e2e blocked on WSL system libs; Lighthouse on a real theme pending.**
+- [~] Shopify App Store requirements. AC: self-review 31 pass, 0 fail, 3 needs review (2.2.3 App Bridge script order under Next.js, 1.2.2 live billing, 3.1.1 TLS once deployed); listing draft, privacy, terms and data-deletion docs (legal review needed).
+- [~] Production deployment, monitoring, pilot, launch site. AC: Dockerfile, compose and Caddy (HTTPS), backup and verified restore, monitoring and alert plan, rollback, pilot plan, launch report. **Not deployed (approval, host and credentials needed).**
 
 ## TikTok readiness (SOW §6)
 Tracked within Phase 4, 6 and 7 items. Developer approval and production scopes are **pending (owner action)**.
@@ -83,3 +86,20 @@ Tracked within Phase 4, 6 and 7 items. Developer approval and production scopes 
 | Attribution disputes | Merchant trust | Documented window; direct vs assisted shown separately |
 | Bunny cost spikes from viral video | Cost | Per-plan monthly view limits and usage alerts |
 | Cross-tenant data leak | Critical | Context repositories, Prisma guard, isolation tests on every module |
+
+
+## Release readiness (SOW §7)
+| Area | Status |
+|---|---|
+| Merchant login and roles · Shopify install · Store isolation · App lifecycle · Dashboard and onboarding | ✅ code + tests · live install pending |
+| Upload · YouTube/Shorts · TikTok URL · TikTok account · Metadata/search · Product/variant tagging · Bulk actions | ✅ code + tests · live provider calls pending credentials/approval |
+| Stories · Carousel · Floating · Banner and Grid · Responsive · App blocks and embed · Popup/PDP · Variants and ATC · Performance and accessibility | ✅ code + DOM tests · e2e and dev-store checks pending |
+| Analytics and dedup · Attribution · GA4/GTM/Meta/CleverTap/Mixpanel · AI customization · Custom CSS and domains · Billing and metering · Support console and audit logs | ✅ code + tests · live billing, AI and integrations pending credentials |
+| Automated tests pass | ✅ 255/255 (e2e pending libs) |
+| Security and tenant isolation verified | ✅ automated |
+| Backups and monitoring enabled | ⏳ scripts and plan ready; enable on deploy |
+| Privacy and data deletion flows tested | ✅ automated (`shop/redact`); policy text needs legal review |
+| Shopify compliance and listing review | ⏳ self-review done; 3 items to confirm |
+| TikTok/YouTube credentials and approvals verified | ⏳ owner |
+| Staging acceptance signed off | ⏳ owner |
+| Rollback and support documentation ready | ✅ DEPLOYMENT.md, SUPPORT.md |

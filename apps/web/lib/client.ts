@@ -26,9 +26,20 @@ export function selectStore(storeId: string): void {
   }
 }
 
+/**
+ * Embedded pages carry the shopify-api-key meta tag. Next.js async chunks can execute before the App Bridge CDN
+ * script finishes loading, so wait for it (up to 5s) rather than falling back to cookie auth inside Shopify admin.
+ */
+async function appBridge(): Promise<Window['shopify']> {
+  if (window.shopify || !document.querySelector('meta[name="shopify-api-key"]')) return window.shopify;
+  for (let waited = 0; waited < 5000 && !window.shopify; waited += 50) await new Promise((r) => setTimeout(r, 50));
+  return window.shopify;
+}
+
 async function authHeaders(extra: Record<string, string> = {}): Promise<Record<string, string>> {
   const headers = { ...extra };
-  if (window.shopify) headers.authorization = `Bearer ${await window.shopify.idToken()}`;
+  const shopify = await appBridge();
+  if (shopify) headers.authorization = `Bearer ${await shopify.idToken()}`;
   else {
     const store = selectedStore();
     if (store) headers['x-store-id'] = store;

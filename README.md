@@ -2,7 +2,7 @@
 
 A multi-tenant SaaS that lets D2C brands put shoppable videos on their Shopify storefronts. Videos can be uploads (Bunny Stream), YouTube Shorts or TikTok videos, each with tagged products, Add to Cart and revenue attribution.
 
-**Status:** Phases 0 to 9 are code-complete with automated tests (251 unit/integration plus 14 e2e written). Live checks are waiting on credentials and a dev-store install (see [docs/STOREFRONT_TEST_PLAN.md](docs/STOREFRONT_TEST_PLAN.md)). Phase 10 (hardening and launch) is next. See [docs/CHECKLIST.md](docs/CHECKLIST.md).
+**Status:** All phases (0 to 10) are code-complete with 255 passing tests. **Not deployed.** Launch is waiting on owner actions (credentials, approvals, hosting, legal review); see [docs/LAUNCH_REPORT.md](docs/LAUNCH_REPORT.md). See [docs/CHECKLIST.md](docs/CHECKLIST.md).
 
 ## Stack
 pnpm monorepo · Node 24 · TypeScript · Next.js 16 (`apps/web`) · Fastify 5 API and BullMQ worker (`apps/api`) · Prisma 7 / PostgreSQL 16 · Redis 7 · Zod schemas shared in `packages/shared`.
@@ -38,4 +38,4 @@ The settings are in [shopify.app.toml](shopify.app.toml) (scopes, webhooks, URLs
 - Env vars are validated at boot ([apps/api/src/config/env.ts](apps/api/src/config/env.ts)). An invalid config exits with the list of bad variables.
 
 ## Documentation
-[PRD](docs/PRD.md) · [Architecture](docs/ARCHITECTURE.md) · [Database](docs/DATABASE.md) · [API](docs/API.md) · [Security](docs/SECURITY.md) · [Analytics](docs/ANALYTICS.md) · [Billing](docs/BILLING.md) · [Support](docs/SUPPORT.md) · [Testing](docs/TESTING.md) · [Deployment](docs/DEPLOYMENT.md) · [Checklist](docs/CHECKLIST.md) · [SOW](docs/SOW.md)
+[PRD](docs/PRD.md) · [Architecture](docs/ARCHITECTURE.md) · [Database](docs/DATABASE.md) · [API](docs/API.md) · [Security](docs/SECURITY.md) · [Analytics](docs/ANALYTICS.md) · [Billing](docs/BILLING.md) · [Support](docs/SUPPORT.md) · [Launch report](docs/LAUNCH_REPORT.md) · [Merchant guide](docs/MERCHANT_GUIDE.md) · [Data deletion](docs/DATA_DELETION.md) · [Pilot plan](docs/PILOT_PLAN.md) · [Testing](docs/TESTING.md) · [Deployment](docs/DEPLOYMENT.md) · [Checklist](docs/CHECKLIST.md) · [SOW](docs/SOW.md)

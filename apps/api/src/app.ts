@@ -23,6 +23,12 @@ import { widgetRoutes } from './modules/widgets/routes.js';
 import { teamRoutes } from './modules/team/routes.js';
 import { webhookRoutes } from './modules/webhooks/routes.js';
 
+declare module 'fastify' {
+  interface FastifyInstance {
+    routeInventory: { method: string; url: string }[];
+  }
+}
+
 export async function buildApp(deps: Deps): Promise<FastifyInstance> {
   const { env } = deps;
   const app = Fastify({
@@ -43,6 +49,12 @@ export async function buildApp(deps: Deps): Promise<FastifyInstance> {
   await app.register(cookie);
   await app.register(rateLimit, { global: false, redis: deps.redis, nameSpace: 'rl:' });
   app.decorateRequest('ctx', null);
+  // Route inventory, used by the security tests to prove every route is either authenticated or on the public allowlist.
+  const routeInventory: { method: string; url: string }[] = [];
+  app.decorate('routeInventory', routeInventory);
+  app.addHook('onRoute', (r) => {
+    for (const m of [r.method].flat()) if (m !== 'HEAD' && m !== 'OPTIONS') routeInventory.push({ method: m, url: r.url });
+  });
 
   app.setErrorHandler((err: FastifyError, req, reply) => {
     let body: ApiError;

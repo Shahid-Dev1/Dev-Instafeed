@@ -1,0 +1,36 @@
+# Production topology (single VPS). PostgreSQL and Redis should be managed services with backups;
+# point DATABASE_URL / REDIS_URL at them in deploy/.env.production (never committed).
+services:
+  migrate:
+    build: { context: .., dockerfile: deploy/Dockerfile }
+    env_file: .env.production
+    command: ["pnpm", "--filter", "@instafeed/api", "db:deploy"]
+    restart: "no"
+  api:
+    build: { context: .., dockerfile: deploy/Dockerfile }
+    env_file: .env.production
+    command: ["node", "apps/api/dist/server.js"]
+    depends_on: { migrate: { condition: service_completed_successfully } }
+    restart: unless-stopped
+  worker:
+    build: { context: .., dockerfile: deploy/Dockerfile }
+    env_file: .env.production
+    command: ["node", "apps/api/dist/worker.js"]
+    depends_on: { migrate: { condition: service_completed_successfully } }
+    restart: unless-stopped
+    healthcheck: { disable: true }
+  web:
+    build: { context: .., dockerfile: deploy/Dockerfile }
+    env_file: .env.production
+    environment: { API_URL: "http://api:4000", HEALTH_PORT: "3000" }
+    command: ["pnpm", "--filter", "@instafeed/web", "start"]
+    depends_on: [api]
+    restart: unless-stopped
+  caddy:
+    image: caddy:2.10.2
+    ports: ["80:80", "443:443"]
+    volumes: ["./Caddyfile:/etc/caddy/Caddyfile:ro", "caddy_data:/data"]
+    depends_on: [web]
+    restart: unless-stopped
+volumes:
+  caddy_data:

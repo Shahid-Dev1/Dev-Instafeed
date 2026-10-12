@@ -7,3 +7,7 @@ allowBuilds:
   esbuild: true
   msgpackr-extract: true
   prisma: true
+# Security overrides for transitive deps of the Prisma CLI (GHSA advisories; see docs/LAUNCH_REPORT.md).
+overrides:
+  mysql2: 3.24.4
+  deepmerge-ts: 8.0.2
