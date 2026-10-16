@@ -15,8 +15,14 @@ redirect_urls = ["http://localhost:3000/auth/shopify/callback"]
 api_version = "2026-10"
 
   [[webhooks.subscriptions]]
-  topics = ["app/uninstalled", "app/scopes_update", "products/create", "products/update", "products/delete", "orders/create", "orders/cancelled"]
+  topics = ["app/uninstalled", "app/scopes_update", "products/create", "products/update", "products/delete"]
   uri = "/webhooks/shopify"
+
+  # Order webhooks need approved protected customer data access (Dev Dashboard → API access).
+  # Re-enable after approval; until then order attribution receives no orders.
+  # [[webhooks.subscriptions]]
+  # topics = ["orders/create", "orders/cancelled"]
+  # uri = "/webhooks/shopify"
 
   [[webhooks.subscriptions]]
   compliance_topics = ["customers/data_request", "customers/redact", "shop/redact"]

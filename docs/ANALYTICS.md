@@ -44,6 +44,7 @@ Defined in `packages/shared/src/analytics.ts` (`storefrontEventSchema`, strict).
 | Conversion rate | direct orders ÷ video opens |
 
 ## Known limitations
+- **Order webhooks are disabled in `shopify.app.toml` until protected customer data access (Level 1) is approved.** Shopify rejects `orders/create` and `orders/cancelled` subscriptions without it. Re-enable the commented block after approval; until then no orders are attributed.
 - Checkout starts depend on the Web Pixel. It needs the `write_pixels` and `read_customer_events` scopes and is activated automatically after install. Pixel requests can't be signed, so the endpoint only accepts visitors already seen in that store, is rate-limited, and is deduplicated.
 - Embedded third-party players (YouTube, TikTok, Instagram) don't expose progress events to us, so only opens and starts are counted for them.
 - Orders placed without the cart attribute (other devices, cleared storage, no consent) can't be attributed.
